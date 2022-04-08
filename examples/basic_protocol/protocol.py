@@ -7,6 +7,8 @@ python basic.py
 
 To use with opentrons_simulate or opentrons_execute
 opentrons_execute protocol.py -d config.yaml
+
+Modify config.yaml as needed
 """
 
 from typing import List
