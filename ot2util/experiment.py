@@ -25,11 +25,12 @@ class ExperimentManager:
         self.exe = "opentrons_simulate" if run_simulation else "opentrons_execute"
 
     def run(self, experiment: Experiment) -> int:
+        # The -d option corresponds to the opentrons custom-data-file argument
+        # which passes the config file to the protocol.bundled_data field
         command = f"{self.exe} {experiment.protocol_script_path} -d {experiment.yaml}"
         proc = subprocess.run(command, shell=True, capture_output=True)
         with open(experiment.outdir / "stdout.log", "wb") as f:
             f.write(proc.stdout)
         with open(experiment.outdir / "stderr.log", "wb") as f:
             f.write(proc.stderr)
-
         return proc.returncode
