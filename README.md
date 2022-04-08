@@ -1,5 +1,5 @@
 # ot2util
-OT2 protocol utilities
+OT-2 protocol utilities
 
 See `examples/` folder for specific protocols
 
