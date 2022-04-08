@@ -1,0 +1,6 @@
+output_dir: "search_results"
+protocol_script_path: "protocol.py"
+run_simulation: true
+volume_values:
+- 50
+- 100

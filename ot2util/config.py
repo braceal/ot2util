@@ -1,5 +1,6 @@
 import json
 import yaml
+import argparse
 from pathlib import Path
 from typing import Type, TypeVar, Union
 from pydantic import BaseSettings as _BaseSettings
@@ -34,3 +35,12 @@ class LabwareConfig(BaseSettings):
 class InstrumentConfig(BaseSettings):
     name: str
     mount: str
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-c", "--config", help="YAML config file", type=str, required=True
+    )
+    args = parser.parse_args()
+    return args
