@@ -27,6 +27,11 @@ class BaseSettings(_BaseSettings):
         return cls(**raw_data)  # type: ignore[call-arg]
 
 
+class ProtocolConfig(BaseSettings):
+    # Path to write data to on the raspberry pi
+    workdir: Path = Path.home()
+
+
 class LabwareConfig(BaseSettings):
     name: str
     location: str

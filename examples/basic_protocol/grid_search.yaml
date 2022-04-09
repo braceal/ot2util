@@ -1,5 +1,5 @@
 output_dir: "search_results"
-protocol_script_path: "protocol.py"
+protocol_script: "protocol.py"
 run_simulation: true
 volume_values:
 - 50

@@ -13,10 +13,10 @@ Modify config.yaml as needed
 
 from typing import List
 from opentrons import protocol_api
-from ot2util.config import BaseSettings, LabwareConfig, InstrumentConfig
+from ot2util.config import ProtocolConfig, LabwareConfig, InstrumentConfig
 
 
-class ProtocolConfig(BaseSettings):
+class SimpleProtocolConfig(ProtocolConfig):
     # File must be named config
     source_wells: List[str] = ["A1", "A2", "A3"]
     destination_wells: List[str] = ["B1", "B2", "B3"]
@@ -44,7 +44,7 @@ def run(protocol: protocol_api.ProtocolContext):
 
     # https://github.com/Opentrons/opentrons/blob/edge/api/src/opentrons/util/entrypoint_util.py#L59
     # protocol.bundled_data["config.yaml"] will contain the raw bytes of the config file
-    cfg = ProtocolConfig.from_bytes(protocol.bundled_data["config.yaml"])
+    cfg = SimpleProtocolConfig.from_bytes(protocol.bundled_data["config.yaml"])
 
     # labware
     plate = protocol.load_labware(cfg.wellplate.name, cfg.wellplate.location)
@@ -65,4 +65,4 @@ def run(protocol: protocol_api.ProtocolContext):
 
 if __name__ == "__main__":
     # Write an example yaml file with default settings
-    ProtocolConfig().dump_yaml("config.yaml")
+    SimpleProtocolConfig().dump_yaml("config.yaml")
