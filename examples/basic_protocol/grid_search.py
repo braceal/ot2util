@@ -11,6 +11,10 @@ from ot2util.config import BaseSettings, parse_args
 from ot2util.experiment import Experiment, ExperimentManager
 from protocol import SimpleProtocolConfig
 
+import logging
+logging.basicConfig()
+logging.getLogger('paramiko.transport').setLevel(logging.DEBUG)
+
 
 class GridSearchConfig(BaseSettings):
     # Remote setup parameters (None if running locally)
@@ -20,6 +24,8 @@ class GridSearchConfig(BaseSettings):
     host: Optional[str] = None
     # Private key path
     key_filename: Optional[str] = None
+    # Path to opentrons_simulate or opentrons_execute directory
+    opentrons_path: Path = Path("/usr/bin")
 
     # Directory to write experimental results to
     output_dir: Path = ""
@@ -41,7 +47,7 @@ def main(cfg: GridSearchConfig):
 
     # Creat experiment manager to launch experiments
     experiment_manager = ExperimentManager(
-        cfg.run_simulation, cfg.host, cfg.key_filename
+        cfg.run_simulation, cfg.host, cfg.key_filename, cfg.opentrons_path
     )
 
     # Count number of experiments to label directories

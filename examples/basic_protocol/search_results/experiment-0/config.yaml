@@ -1,4 +1,4 @@
-workdir: /Users/abrace
+workdir: /home/locobot/test-ot2/experiment-0
 source_wells:
 - A1
 - A2
@@ -10,7 +10,7 @@ destination_wells:
 volume: 50
 wellplate:
     name: corning_96_wellplate_360ul_flat
-    location: '2'
+    location: '8'
 tiprack:
     name: opentrons_96_tiprack_300ul
     location: '1'

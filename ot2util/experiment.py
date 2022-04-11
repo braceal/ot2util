@@ -31,6 +31,7 @@ class ExperimentManager:
         run_simulation: bool,
         host: Optional[str] = None,
         key_filename: Optional[str] = None,
+        opentrons_path: Path = Path("/usr/bin"),
     ):
         """Manage a set of experiments to be run in the same session.
 
@@ -49,15 +50,18 @@ class ExperimentManager:
             "/home/myuser/.ssh/private.key".
         """
         self.exe = "opentrons_simulate" if run_simulation else "opentrons_execute"
+        self.exe = Path(opentrons_path) / self.exe
+
 
         self.conn = None
         if host is not None:
-            if key_filename is None:
-                raise ValueError("Path to private key file required. See key_filename.")
+            #if key_filename is None:
+            #    raise ValueError("Path to private key file required. See key_filename.")
 
             self.conn = Connection(
                 host=host,
-                connect_kwargs={"key_filename": key_filename},
+                port=22,
+                connect_kwargs={"password": "locobot"},
             )
             # TODO: We may be able to add an optional proxy jump to connect
             #       to the robot from a remote location not connected to the
@@ -82,9 +86,9 @@ class ExperimentManager:
 
         workdir = experiment.remote_dir
         # Transfer protocol file and configuration over to remote
-        self.conn.run(f"mkdir {workdir}")
-        self.conn.put(experiment.protocol_script, remote=workdir)
-        self.conn.put(experiment.yaml, remote=workdir)
+        self.conn.run(f"mkdir -p {workdir}") # TODO: Add clean up. Create experiment dir in constructor and remove in destructor.
+        self.conn.put(experiment.protocol_script, str(workdir))
+        self.conn.put(experiment.yaml, str(workdir))
 
         # Adjust paths to remote workdir
         remote_protocol = workdir / experiment.protocol_script.name
@@ -101,15 +105,18 @@ class ExperimentManager:
             return returncode
 
         # Transfer experiment results back to local
-        transfer_payload = f"{experiment.name}.tar.gz"
+        remote_tar = workdir.parent / f"{experiment.name}.tar.gz"
+        local_tar = str(experiment.output_dir / remote_tar.name)
         excludes = f'--exclude="{remote_protocol.name}" --exclude="{remote_yaml.name}"'
-        self.conn.run(f"tar {excludes} -czvf {transfer_payload} {workdir}")
-        self.conn.get(transfer_payload, local=experiment.output_dir)
+        self.conn.run(f"cd {workdir.parent} && tar {excludes} -czvf {remote_tar} {workdir.name}")
+        self.conn.get(str(remote_tar), local=local_tar)
         # Clean up the experiment on remote # TODO: test this
-        # self.conn.run(f"rm -r {transfer_payload} {workdir}")
+        self.conn.run(f"rm -r {workdir} {remote_tar}")
         # Extract payload into experiment output directory
-        local_tar = experiment.output_dir / transfer_payload
+        #local_tar = experiment.output_dir / remote_tar.name # remove
         subprocess.run(f"tar -xf {local_tar} -C {experiment.output_dir}", shell=True)
+        subprocess.run(f"mv {experiment.output_dir / experiment.name}/* {experiment.output_dir}", shell=True)
+        subprocess.run(f"rm -r {experiment.output_dir / experiment.name} {local_tar}", shell=True)
 
         return returncode
 

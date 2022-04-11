@@ -1,8 +1,8 @@
 Picking up tip from A1 of Opentrons 96 Tip Rack 300 µL on 1
-Aspirating 50.0 uL from A1 of Corning 96 Well Plate 360 µL Flat on 2 at 150.0 uL/sec
-Dispensing 50.0 uL into B1 of Corning 96 Well Plate 360 µL Flat on 2 at 300.0 uL/sec
-Aspirating 50.0 uL from A2 of Corning 96 Well Plate 360 µL Flat on 2 at 150.0 uL/sec
-Dispensing 50.0 uL into B2 of Corning 96 Well Plate 360 µL Flat on 2 at 300.0 uL/sec
-Aspirating 50.0 uL from A3 of Corning 96 Well Plate 360 µL Flat on 2 at 150.0 uL/sec
-Dispensing 50.0 uL into B3 of Corning 96 Well Plate 360 µL Flat on 2 at 300.0 uL/sec
+Aspirating 50.0 uL from A1 of Corning 96 Well Plate 360 µL Flat on 8 at 150.0 uL/sec
+Dispensing 50.0 uL into B1 of Corning 96 Well Plate 360 µL Flat on 8 at 300.0 uL/sec
+Aspirating 50.0 uL from A2 of Corning 96 Well Plate 360 µL Flat on 8 at 150.0 uL/sec
+Dispensing 50.0 uL into B2 of Corning 96 Well Plate 360 µL Flat on 8 at 300.0 uL/sec
+Aspirating 50.0 uL from A3 of Corning 96 Well Plate 360 µL Flat on 8 at 150.0 uL/sec
+Dispensing 50.0 uL into B3 of Corning 96 Well Plate 360 µL Flat on 8 at 300.0 uL/sec
 Dropping tip into A1 of Opentrons Fixed Trash on 12

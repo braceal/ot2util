@@ -9,10 +9,10 @@ destination_wells:
 volume: 100
 wellplate:
     name: corning_96_wellplate_360ul_flat
-    location: '2'
-tiprack:
-    name: opentrons_96_tiprack_300ul
     location: '1'
+tiprack:
+    name: opentrons_96_tiprack_1000ul
+    location: '8'
 pipette:
     name: p300_single
     mount: left

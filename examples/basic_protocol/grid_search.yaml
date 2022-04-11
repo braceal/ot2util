@@ -1,6 +1,11 @@
 output_dir: "search_results"
+remote_dir: /home/locobot/test-ot2
 protocol_script: "protocol.py"
 run_simulation: true
+host: locobot@192.168.0.101
+key_filename: /User/apple/.ssh/id_rsa
+opentrons_path: /home/locobot/.local/bin
+#:31950
 volume_values:
 - 50
 - 100

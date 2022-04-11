@@ -62,6 +62,8 @@ def run(protocol: protocol_api.ProtocolContext):
         pipette.dispense(cfg.volume, plate[dst_well])
     pipette.drop_tip()
 
+    (cfg.workdir / "experiment-result").touch()
+
 
 if __name__ == "__main__":
     # Write an example yaml file with default settings
