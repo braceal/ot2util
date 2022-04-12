@@ -57,6 +57,7 @@ class ExperimentManager:
             # if key_filename is None:
             #    raise ValueError("Path to private key file required. See key_filename.")
 
+            # TODO: Handle authentication in a better way
             self.conn = Connection(
                 host=host,
                 port=22,
