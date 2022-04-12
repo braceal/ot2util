@@ -112,10 +112,11 @@ class ExperimentManager:
         tar_command = f"tar {excludes} -czvf {remote_tar} {workdir.name}"
         self.conn.run(f"cd {workdir.parent} && {tar_command}")
         self.conn.get(str(remote_tar), local=local_tar)
+
         # Clean up the experiment on remote
         self.conn.run(f"rm -r {workdir} {remote_tar}")
-        # Extract payload into experiment output directory
-        # local_tar = experiment.output_dir / remote_tar.name # remove
+
+        # Extract payload into experiment output directory and clean up transfer files
         subprocess.run(f"tar -xf {local_tar} -C {experiment.output_dir}", shell=True)
         subprocess.run(f"mv {local_tmp}/* {experiment.output_dir}", shell=True)
         subprocess.run(f"rm -r {local_tmp} {local_tar}", shell=True)
