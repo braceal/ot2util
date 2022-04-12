@@ -12,8 +12,9 @@ from ot2util.experiment import Experiment, ExperimentManager
 from protocol import SimpleProtocolConfig
 
 import logging
+
 logging.basicConfig()
-logging.getLogger('paramiko.transport').setLevel(logging.DEBUG)
+logging.getLogger("paramiko.transport").setLevel(logging.DEBUG)
 
 
 class GridSearchConfig(BaseSettings):

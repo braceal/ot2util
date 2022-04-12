@@ -49,13 +49,12 @@ class ExperimentManager:
             must be supplied to the Fabric Connection. For example,
             "/home/myuser/.ssh/private.key".
         """
-        self.exe = "opentrons_simulate" if run_simulation else "opentrons_execute"
-        self.exe = Path(opentrons_path) / self.exe
-
+        opentrons_exe = "opentrons_simulate" if run_simulation else "opentrons_execute"
+        self.exe = Path(opentrons_path) / opentrons_exe
 
         self.conn = None
         if host is not None:
-            #if key_filename is None:
+            # if key_filename is None:
             #    raise ValueError("Path to private key file required. See key_filename.")
 
             self.conn = Connection(
@@ -86,7 +85,8 @@ class ExperimentManager:
 
         workdir = experiment.remote_dir
         # Transfer protocol file and configuration over to remote
-        self.conn.run(f"mkdir -p {workdir}") # TODO: Add clean up. Create experiment dir in constructor and remove in destructor.
+        # TODO: Add clean up. Create experiment dir in constructor and remove in destructor.
+        self.conn.run(f"mkdir -p {workdir}")
         self.conn.put(experiment.protocol_script, str(workdir))
         self.conn.put(experiment.yaml, str(workdir))
 
@@ -105,18 +105,20 @@ class ExperimentManager:
             return returncode
 
         # Transfer experiment results back to local
+        local_tmp = experiment.output_dir / experiment.name
         remote_tar = workdir.parent / f"{experiment.name}.tar.gz"
         local_tar = str(experiment.output_dir / remote_tar.name)
         excludes = f'--exclude="{remote_protocol.name}" --exclude="{remote_yaml.name}"'
-        self.conn.run(f"cd {workdir.parent} && tar {excludes} -czvf {remote_tar} {workdir.name}")
+        tar_command = f"tar {excludes} -czvf {remote_tar} {workdir.name}"
+        self.conn.run(f"cd {workdir.parent} && {tar_command}")
         self.conn.get(str(remote_tar), local=local_tar)
-        # Clean up the experiment on remote # TODO: test this
+        # Clean up the experiment on remote
         self.conn.run(f"rm -r {workdir} {remote_tar}")
         # Extract payload into experiment output directory
-        #local_tar = experiment.output_dir / remote_tar.name # remove
+        # local_tar = experiment.output_dir / remote_tar.name # remove
         subprocess.run(f"tar -xf {local_tar} -C {experiment.output_dir}", shell=True)
-        subprocess.run(f"mv {experiment.output_dir / experiment.name}/* {experiment.output_dir}", shell=True)
-        subprocess.run(f"rm -r {experiment.output_dir / experiment.name} {local_tar}", shell=True)
+        subprocess.run(f"mv {local_tmp}/* {experiment.output_dir}", shell=True)
+        subprocess.run(f"rm -r {local_tmp} {local_tar}", shell=True)
 
         return returncode
 
