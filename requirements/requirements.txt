@@ -2,3 +2,4 @@ opentrons
 pydantic
 pyyaml
 Fabric
+paramiko-ng
