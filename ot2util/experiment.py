@@ -51,6 +51,7 @@ class ExperimentManager:
         """
         opentrons_exe = "opentrons_simulate" if run_simulation else "opentrons_execute"
         self.exe = Path(opentrons_path) / opentrons_exe
+        self.host = host
 
         self.conn = None
         if host is not None:
@@ -88,8 +89,10 @@ class ExperimentManager:
         # Transfer protocol file and configuration over to remote
         # TODO: Add clean up. Create experiment dir in constructor and remove in destructor.
         self.conn.run(f"mkdir -p {workdir}")
-        self.conn.put(experiment.protocol_script, str(workdir))
-        self.conn.put(experiment.yaml, str(workdir))
+        subprocess.run(f"scp {experiment.protocol_script} {self.host}:{workdir}")
+        subprocess.run(f"scp {experiment.yaml} {self.host}:{workdir}")
+        # self.conn.put(experiment.protocol_script, str(workdir))
+        # self.conn.put(experiment.yaml, str(workdir))
 
         # Adjust paths to remote workdir
         remote_protocol = workdir / experiment.protocol_script.name
@@ -112,7 +115,8 @@ class ExperimentManager:
         excludes = f'--exclude="{remote_protocol.name}" --exclude="{remote_yaml.name}"'
         tar_command = f"tar {excludes} -czvf {remote_tar} {workdir.name}"
         self.conn.run(f"cd {workdir.parent} && {tar_command}")
-        self.conn.get(str(remote_tar), local=local_tar)
+        # self.conn.get(str(remote_tar), local=local_tar)
+        subprocess.run(f"scp {self.host}:{remote_tar} {local_tar}")
 
         # Clean up the experiment on remote
         self.conn.run(f"rm -r {workdir} {remote_tar}")
