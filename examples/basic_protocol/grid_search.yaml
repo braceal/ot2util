@@ -1,8 +1,8 @@
 output_dir: "search_results"
 remote_dir: /root/test1
 protocol: "protocol.py"
-run_simulation: false
-host: root@192.168.0.102
+run_simulation: true
+host: root@192.168.0.103 # root@192.168.0.102
 key_filename: /User/apple/.ssh/id_rsa
 # opentrons_path: /home/locobot/.local/bin
 #:31950
