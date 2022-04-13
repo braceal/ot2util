@@ -4,7 +4,7 @@ from pathlib import Path
 from fabric import Connection
 from invoke.runners import Result
 from ot2util.config import ProtocolConfig, PathLike
-
+import os
 
 class Experiment:
     def __init__(
@@ -84,13 +84,16 @@ class ExperimentManager:
 
     def _run_remote(self, experiment: Experiment) -> int:
         assert self.conn is not None
-
+        subprocess.run(f"pwd")
+        subprocess.run(f"ls -l", shell=True)
+        subprocess.run(f"ls protocol.py", shell=True)
+        
         workdir = experiment.remote_dir
         # Transfer protocol file and configuration over to remote
         # TODO: Add clean up. Create experiment dir in constructor and remove in destructor.
         self.conn.run(f"mkdir -p {workdir}")
-        subprocess.run(f"scp {experiment.protocol_script} {self.host}:{workdir}")
-        subprocess.run(f"scp {experiment.yaml} {self.host}:{workdir}")
+        subprocess.run(f"scp {experiment.protocol_script} {self.host}:{workdir}", shell=True)
+        subprocess.run(f"scp {experiment.yaml} {self.host}:{workdir}", shell=True)
         # self.conn.put(experiment.protocol_script, str(workdir))
         # self.conn.put(experiment.yaml, str(workdir))
 
@@ -113,13 +116,14 @@ class ExperimentManager:
         remote_tar = workdir.parent / f"{experiment.name}.tar.gz"
         local_tar = str(experiment.output_dir / remote_tar.name)
         excludes = f'--exclude="{remote_protocol.name}" --exclude="{remote_yaml.name}"'
-        tar_command = f"tar {excludes} -czvf {remote_tar} {workdir.name}"
+        tar_command = f"tar {excludes} -cvf {remote_tar} {workdir.name}"
         self.conn.run(f"cd {workdir.parent} && {tar_command}")
         # self.conn.get(str(remote_tar), local=local_tar)
-        subprocess.run(f"scp {self.host}:{remote_tar} {local_tar}")
+        # subprocess.run(f"pwd")
+        subprocess.run(f"scp {self.host}:{remote_tar} {local_tar}", shell=True)
 
         # Clean up the experiment on remote
-        self.conn.run(f"rm -r {workdir} {remote_tar}")
+        # self.conn.run(f"rm -r {workdir} {remote_tar}")
 
         # Extract payload into experiment output directory and clean up transfer files
         subprocess.run(f"tar -xf {local_tar} -C {experiment.output_dir}", shell=True)
