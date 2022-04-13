@@ -8,7 +8,7 @@ See `examples/` folder for specific protocols
 On the OT-2 raspberry (this modifies the default python environment):
 ```
 git clone https://github.com/braceal/ot2util.git
-pip install -r ot2util/requirments/ot2-minimal.txt
+pip install -r ot2util/requirements/ot2-minimal.txt
 pip install ot2util
 ```
 
