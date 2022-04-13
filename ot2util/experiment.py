@@ -88,8 +88,8 @@ class ExperimentManager:
         with open(path, mode) as f:
             f.write(contents)
 
-    def _scp(self, src: PathLike, dst: PathLike, recusive: bool = False) -> None:
-        r = "-r" if recusive else ""
+    def _scp(self, src: PathLike, dst: PathLike, recursive: bool = False) -> None:
+        r = "-r" if recursive else ""
         subprocess.run(f"scp {r} {src} {dst}", shell=True)
 
     def _command_template(self, protocol: Path, yaml_path: Path) -> str:
@@ -102,6 +102,7 @@ class ExperimentManager:
         remote_protocol: Path,
         remote_yaml: Path,
     ) -> None:
+        assert self.conn is not None
         local_tmp = experiment.output_dir / experiment.name
         remote_tar = workdir.parent / f"{experiment.name}.tar.gz"
         local_tar = str(experiment.output_dir / remote_tar.name)
@@ -146,6 +147,7 @@ class ExperimentManager:
     def _run_remote(self, experiment: Experiment) -> int:
         assert self.conn is not None
 
+        # /root/test1/experiment-1
         workdir = experiment.remote_dir
 
         # Adjust paths to remote workdir
@@ -159,7 +161,7 @@ class ExperimentManager:
         # Transfer protocol file and configuration over to remote
         self.conn.run(f"mkdir -p {workdir}")
         self._scp(experiment.protocol, f"{self.host}:{remote_protocol}")
-        self._scp(experiment.yaml, f"{self.host}:{workdir}")
+        self._scp(experiment.yaml, f"{self.host}:{workdir.parent}")
 
         command = self._command_template(remote_protocol, remote_yaml)
 

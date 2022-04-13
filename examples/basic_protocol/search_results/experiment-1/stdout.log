@@ -1,9 +1,0 @@
-{'config.yaml': b"workdir: /root/test1/experiment-1\nsource_wells:\n- A1\n- A2\n- A3\ndestination_wells:\n- B1\n- B2\n- B3\nvolume: 100\nwellplate:\n    name: corning_96_wellplate_360ul_flat\n    location: '2'\ntiprack:\n    name: opentrons_96_tiprack_300ul\n    location: '1'\npipette:\n    name: p300_single\n    mount: left\n"}
-Picking up tip from A1 of Opentrons 96 Tip Rack 300 µL on 1
-Aspirating 100.0 uL from A1 of Corning 96 Well Plate 360 µL Flat on 2 at 150.0 uL/sec
-Dispensing 100.0 uL into B1 of Corning 96 Well Plate 360 µL Flat on 2 at 300.0 uL/sec
-Aspirating 100.0 uL from A2 of Corning 96 Well Plate 360 µL Flat on 2 at 150.0 uL/sec
-Dispensing 100.0 uL into B2 of Corning 96 Well Plate 360 µL Flat on 2 at 300.0 uL/sec
-Aspirating 100.0 uL from A3 of Corning 96 Well Plate 360 µL Flat on 2 at 150.0 uL/sec
-Dispensing 100.0 uL into B3 of Corning 96 Well Plate 360 µL Flat on 2 at 300.0 uL/sec
-Dropping tip into A1 of Opentrons Fixed Trash on 12

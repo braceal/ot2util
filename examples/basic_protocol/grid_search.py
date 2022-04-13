@@ -46,7 +46,7 @@ def main(cfg: GridSearchConfig):
     cfg.output_dir.mkdir(exist_ok=True)
 
     # Create a protocol configuration with default parameters
-    protocol_cfg = SimpleProtocolConfig()
+    protocol_cfg = SimpleProtocolConfig.from_yaml("config.yaml")
 
     # Creat experiment manager to launch experiments
     experiment_manager = ExperimentManager(

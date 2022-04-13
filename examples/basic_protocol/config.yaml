@@ -14,5 +14,5 @@ tiprack:
     name: opentrons_96_tiprack_1000ul
     location: '8'
 pipette:
-    name: p300_single
-    mount: left
+    name: p1000_single_gen2
+    mount: right
