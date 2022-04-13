@@ -33,7 +33,7 @@ class GridSearchConfig(BaseSettings):
     # Directory to write experimental results to
     output_dir: Path = ""
     # Path to protocol script containing run function
-    protocol_script: Path = ""
+    protocol: Path = ""
     # Toggle simulation
     run_simulation: bool = True
     # Volume values to grid search
@@ -70,7 +70,7 @@ def main(cfg: GridSearchConfig):
         if cfg.remote_dir is not None:
             protocol_cfg.workdir = cfg.remote_dir / experiment_name
         experiment = Experiment(
-            experiment_name, cfg.output_dir, cfg.protocol_script, protocol_cfg
+            experiment_name, cfg.output_dir, cfg.protocol, protocol_cfg
         )
 
         # Run the experiment

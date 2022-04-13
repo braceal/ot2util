@@ -11,14 +11,14 @@ class Experiment:
         self,
         name: str,
         output_dir: PathLike,
-        protocol_script: PathLike,
+        protocol: PathLike,
         protocol_cfg: ProtocolConfig,
     ):
         self.name = name
         self.remote_dir = protocol_cfg.workdir
         self.output_dir = Path(output_dir) / name
         self.yaml = self.output_dir / "config.yaml"
-        self.protocol_script = Path(protocol_script)
+        self.protocol = Path(protocol)
 
         # Create new experiment directory
         self.output_dir.mkdir()
@@ -88,8 +88,12 @@ class ExperimentManager:
         with open(path, mode) as f:
             f.write(contents)
 
-    def _command_template(self, protocol_script: Path, yaml_path: Path) -> str:
-        return f"{self.exe} {protocol_script} -d {yaml_path}"
+    def _scp(self, src: PathLike, dst: PathLike, recusive: bool = False) -> None:
+        r = "-r" if recusive else ""
+        subprocess.run(f"scp {r} {src} {dst}", shell=True)
+
+    def _command_template(self, protocol: Path, yaml_path: Path) -> str:
+        return f"{self.exe} {protocol} -d {yaml_path}"
 
     def _tar_transfer(
         self,
@@ -104,8 +108,7 @@ class ExperimentManager:
         excludes = f'--exclude="{remote_protocol.name}" --exclude="{remote_yaml.name}"'
         tar_command = f"tar {excludes} -cvf {remote_tar} {workdir.name}"
         self.conn.run(f"cd {workdir.parent} && {tar_command}")
-        # self.conn.get(str(remote_tar), local=local_tar)
-        subprocess.run(f"scp {self.host}:{remote_tar} {local_tar}", shell=True)
+        self._scp(f"{self.host}:{remote_tar}", local_tar)
 
         # Clean up the tar on remote
         self.conn.run(f"rm -r {remote_tar}")
@@ -126,7 +129,7 @@ class ExperimentManager:
         # https://www.cyberciti.biz/faq/scp-exclude-files-when-using-command-recursively-on-unix-linux/
         # https://stackoverflow.com/questions/1228466/how-to-filter-files-when-using-scp-to-copy-dir-recursively
         to_copy = f"{self.host}:{workdir / '*'}"
-        subprocess.run(f"scp -r {to_copy} {experiment.output_dir}", shell=True)
+        self._scp(to_copy, experiment.output_dir, recursive=True)
 
     def _transfer(
         self,
@@ -134,7 +137,7 @@ class ExperimentManager:
         workdir: Path,
         remote_protocol: Path,
         remote_yaml: Path,
-    ):
+    ) -> None:
         if self.tar_transfer:
             self._tar_transfer(experiment, workdir, remote_protocol, remote_yaml)
         else:
@@ -144,17 +147,20 @@ class ExperimentManager:
         assert self.conn is not None
 
         workdir = experiment.remote_dir
-        location = f"{self.host}:{workdir}"
-        # Transfer protocol file and configuration over to remote
-        self.conn.run(f"mkdir -p {workdir}")
-        subprocess.run(f"scp {experiment.protocol_script} {location}", shell=True)
-        subprocess.run(f"scp {experiment.yaml} {location}", shell=True)
-        # self.conn.put(experiment.protocol_script, str(workdir))
-        # self.conn.put(experiment.yaml, str(workdir))
 
         # Adjust paths to remote workdir
-        remote_protocol = workdir / experiment.protocol_script.name
-        remote_yaml = workdir / experiment.yaml.name
+        remote_protocol = workdir / experiment.protocol.name
+        # TODO: It would be cleaner if remote_yaml was stored in workdir
+        #       but there is a bug in the opentrons code that does not
+        #       propogate the -d argument used to pass the config file
+        #       to the protocol. See protocol.py for more explanation.
+        remote_yaml = experiment.remote_dir / experiment.yaml.name
+
+        # Transfer protocol file and configuration over to remote
+        self.conn.run(f"mkdir -p {workdir}")
+        self._scp(experiment.protocol, f"{self.host}:{remote_protocol}")
+        self._scp(experiment.yaml, f"{self.host}:{workdir}")
+
         command = self._command_template(remote_protocol, remote_yaml)
 
         # Execute remote experiment
@@ -177,7 +183,7 @@ class ExperimentManager:
     def _run_local(self, experiment: Experiment) -> int:
         # The -d option corresponds to the opentrons custom-data-file argument
         # which passes the config file to the protocol.bundled_data field
-        command = self._command_template(experiment.protocol_script, experiment.yaml)
+        command = self._command_template(experiment.protocol, experiment.yaml)
         proc = subprocess.run(command, shell=True, capture_output=True)
         self._write_log(proc.stdout, experiment.output_dir / "stdout.log")
         self._write_log(proc.stderr, experiment.output_dir / "stderr.log")
