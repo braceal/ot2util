@@ -86,11 +86,12 @@ class ExperimentManager:
         assert self.conn is not None
 
         workdir = experiment.remote_dir
+        location = f"{self.host}:{workdir}"
         # Transfer protocol file and configuration over to remote
         # TODO: Add clean up. Create experiment dir in constructor and remove in destructor.
         self.conn.run(f"mkdir -p {workdir}")
-        subprocess.run(f"scp {experiment.protocol_script} {self.host}:{workdir}")
-        subprocess.run(f"scp {experiment.yaml} {self.host}:{workdir}")
+        subprocess.run(f"scp {experiment.protocol_script} {location}", shell=True)
+        subprocess.run(f"scp {experiment.yaml} {location}", shell=True)
         # self.conn.put(experiment.protocol_script, str(workdir))
         # self.conn.put(experiment.yaml, str(workdir))
 
@@ -113,10 +114,10 @@ class ExperimentManager:
         remote_tar = workdir.parent / f"{experiment.name}.tar.gz"
         local_tar = str(experiment.output_dir / remote_tar.name)
         excludes = f'--exclude="{remote_protocol.name}" --exclude="{remote_yaml.name}"'
-        tar_command = f"tar {excludes} -czvf {remote_tar} {workdir.name}"
+        tar_command = f"tar {excludes} -cvf {remote_tar} {workdir.name}"
         self.conn.run(f"cd {workdir.parent} && {tar_command}")
         # self.conn.get(str(remote_tar), local=local_tar)
-        subprocess.run(f"scp {self.host}:{remote_tar} {local_tar}")
+        subprocess.run(f"scp {self.host}:{remote_tar} {local_tar}", shell=True)
 
         # Clean up the experiment on remote
         self.conn.run(f"rm -r {workdir} {remote_tar}")
