@@ -12,6 +12,7 @@ Modify config.yaml as needed
 """
 
 from typing import List
+from pathlib import Path
 from opentrons import protocol_api
 from ot2util.config import ProtocolConfig, LabwareConfig, InstrumentConfig
 
@@ -44,8 +45,13 @@ def run(protocol: protocol_api.ProtocolContext):
 
     # https://github.com/Opentrons/opentrons/blob/edge/api/src/opentrons/util/entrypoint_util.py#L59
     # protocol.bundled_data["config.yaml"] will contain the raw bytes of the config file
-    print(protocol.bundled_data)
-    cfg = SimpleProtocolConfig.from_bytes(protocol.bundled_data["config.yaml"])
+    # TODO: There is a bug in the opentrons code which does not pass this parameter
+    #       correctly during opentrons_execute commands.
+    # cfg = SimpleProtocolConfig.from_bytes(protocol.bundled_data["config.yaml"])
+
+    # As a quick fix, we hard code a path to write config files to.
+    remote_dir = Path("/root/test1")
+    cfg = SimpleProtocolConfig.from_yaml(remote_dir / "config.yaml")
 
     # labware
     plate = protocol.load_labware(cfg.wellplate.name, cfg.wellplate.location)
