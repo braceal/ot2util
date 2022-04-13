@@ -27,6 +27,8 @@ class GridSearchConfig(BaseSettings):
     key_filename: Optional[str] = None
     # Path to opentrons_simulate or opentrons_execute directory
     opentrons_path: Path = Path("/usr/bin")
+    # Whether or not to tar files before transferring from remote to local
+    tar_transfer: bool = False
 
     # Directory to write experimental results to
     output_dir: Path = ""
@@ -48,7 +50,11 @@ def main(cfg: GridSearchConfig):
 
     # Creat experiment manager to launch experiments
     experiment_manager = ExperimentManager(
-        cfg.run_simulation, cfg.host, cfg.key_filename, cfg.opentrons_path
+        cfg.run_simulation,
+        cfg.host,
+        cfg.key_filename,
+        cfg.opentrons_path,
+        cfg.tar_transfer,
     )
 
     # Count number of experiments to label directories

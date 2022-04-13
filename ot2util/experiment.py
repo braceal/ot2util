@@ -31,7 +31,8 @@ class ExperimentManager:
         run_simulation: bool,
         host: Optional[str] = None,
         key_filename: Optional[str] = None,
-        opentrons_path: Path = Path("/usr/bin"),
+        opentrons_path: Path = Path("/bin"),
+        tar_transfer: bool = False,
     ):
         """Manage a set of experiments to be run in the same session.
 
@@ -48,10 +49,18 @@ class ExperimentManager:
             If :obj:`host` is specified, a path to your private key file
             must be supplied to the Fabric Connection. For example,
             "/home/myuser/.ssh/private.key".
+        opentrons_path : Optional[str], optional
+            Path to directory containing the opentrons_simulate and
+            opentrons_execute commands.
+        tar_transfer : bool, optional
+            Whether or not to tar files before transferring from the
+            raspberry pi to local. Note that this will slow down communcation
+            but may be necessary if transferring large files, by default, False.
         """
         opentrons_exe = "opentrons_simulate" if run_simulation else "opentrons_execute"
         self.exe = Path(opentrons_path) / opentrons_exe
         self.host = host
+        self.tar_transfer = tar_transfer
 
         self.conn = None
         if host is not None:
@@ -82,13 +91,61 @@ class ExperimentManager:
     def _command_template(self, protocol_script: Path, yaml_path: Path) -> str:
         return f"{self.exe} {protocol_script} -d {yaml_path}"
 
+    def _tar_transfer(
+        self,
+        experiment: Experiment,
+        workdir: Path,
+        remote_protocol: Path,
+        remote_yaml: Path,
+    ) -> None:
+        local_tmp = experiment.output_dir / experiment.name
+        remote_tar = workdir.parent / f"{experiment.name}.tar.gz"
+        local_tar = str(experiment.output_dir / remote_tar.name)
+        excludes = f'--exclude="{remote_protocol.name}" --exclude="{remote_yaml.name}"'
+        tar_command = f"tar {excludes} -cvf {remote_tar} {workdir.name}"
+        self.conn.run(f"cd {workdir.parent} && {tar_command}")
+        # self.conn.get(str(remote_tar), local=local_tar)
+        subprocess.run(f"scp {self.host}:{remote_tar} {local_tar}", shell=True)
+
+        # Clean up the tar on remote
+        self.conn.run(f"rm -r {remote_tar}")
+
+        # Extract payload into experiment output directory and clean up transfer files
+        subprocess.run(f"tar -xf {local_tar} -C {experiment.output_dir}", shell=True)
+        subprocess.run(f"mv {local_tmp}/* {experiment.output_dir}", shell=True)
+        subprocess.run(f"rm -r {local_tmp} {local_tar}", shell=True)
+
+    def _scp_transfer(
+        self,
+        experiment: Experiment,
+        workdir: Path,
+        remote_protocol: Path,
+        remote_yaml: Path,
+    ) -> None:
+        # TODO: Try rsync to exclude the remote_protocol and remote_yaml files
+        # https://www.cyberciti.biz/faq/scp-exclude-files-when-using-command-recursively-on-unix-linux/
+        # https://stackoverflow.com/questions/1228466/how-to-filter-files-when-using-scp-to-copy-dir-recursively
+        to_copy = f"{self.host}:{workdir / '*'}"
+        subprocess.run(f"scp -r {to_copy} {experiment.output_dir}", shell=True)
+
+    def _transfer(
+        self,
+        experiment: Experiment,
+        workdir: Path,
+        remote_protocol: Path,
+        remote_yaml: Path,
+    ):
+        if self.tar_transfer:
+            self._tar_transfer(experiment, workdir, remote_protocol, remote_yaml)
+        else:
+            self._scp_transfer(experiment, workdir, remote_protocol, remote_yaml)
+
     def _run_remote(self, experiment: Experiment) -> int:
         assert self.conn is not None
 
         workdir = experiment.remote_dir
         location = f"{self.host}:{workdir}"
         # Transfer protocol file and configuration over to remote
-        # TODO: Add clean up. Create experiment dir in constructor and remove in destructor.
         self.conn.run(f"mkdir -p {workdir}")
         subprocess.run(f"scp {experiment.protocol_script} {location}", shell=True)
         subprocess.run(f"scp {experiment.yaml} {location}", shell=True)
@@ -110,22 +167,10 @@ class ExperimentManager:
             return returncode
 
         # Transfer experiment results back to local
-        local_tmp = experiment.output_dir / experiment.name
-        remote_tar = workdir.parent / f"{experiment.name}.tar.gz"
-        local_tar = str(experiment.output_dir / remote_tar.name)
-        excludes = f'--exclude="{remote_protocol.name}" --exclude="{remote_yaml.name}"'
-        tar_command = f"tar {excludes} -cvf {remote_tar} {workdir.name}"
-        self.conn.run(f"cd {workdir.parent} && {tar_command}")
-        # self.conn.get(str(remote_tar), local=local_tar)
-        subprocess.run(f"scp {self.host}:{remote_tar} {local_tar}", shell=True)
+        self._transfer(experiment, workdir, remote_protocol, remote_yaml)
 
-        # Clean up the experiment on remote
-        self.conn.run(f"rm -r {workdir} {remote_tar}")
-
-        # Extract payload into experiment output directory and clean up transfer files
-        subprocess.run(f"tar -xf {local_tar} -C {experiment.output_dir}", shell=True)
-        subprocess.run(f"mv {local_tmp}/* {experiment.output_dir}", shell=True)
-        subprocess.run(f"rm -r {local_tmp} {local_tar}", shell=True)
+        # Clean up experiment on remote
+        self.conn.run(f"rm -r {workdir}")
 
         return returncode
 
