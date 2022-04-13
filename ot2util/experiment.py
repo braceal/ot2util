@@ -71,7 +71,7 @@ class ExperimentManager:
             self.conn = Connection(
                 host=host,
                 port=22,
-                connect_kwargs={"password": "locobot"},
+                # connect_kwargs={"password": ""},
             )
             # TODO: We may be able to add an optional proxy jump to connect
             #       to the robot from a remote location not connected to the
@@ -93,7 +93,7 @@ class ExperimentManager:
         subprocess.run(f"scp {r} {src} {dst}", shell=True)
 
     def _command_template(self, protocol: Path, yaml_path: Path) -> str:
-        return f"{self.exe} {protocol} -d {yaml_path}"
+        return f"{self.exe} {protocol}"  # -d {yaml_path}"
 
     def _tar_transfer(
         self,
