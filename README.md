@@ -5,7 +5,12 @@ See `examples/` folder for specific protocols
 
 ## Development
 
-Make sure to use Python >= 3.9
+On the OT-2 raspberry (this modifies the default python environment):
+```
+git clone https://github.com/braceal/ot2util.git
+pip install -r ot2util/requirments/ot2-minimal.txt
+pip install ot2util
+```
 
 Locally:
 ```
