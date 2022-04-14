@@ -7,7 +7,7 @@ destination_wells:
 - B1
 - B2
 - B3
-volume: 50
+volume: 5
 wellplate:
     name: corning_96_wellplate_360ul_flat
     location: '1'

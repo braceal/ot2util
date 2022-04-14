@@ -6,6 +6,7 @@
 ot2/
 conda-env/
 
+examples/basic_protocol/search_results/
 
 ### JupyterNotebooks ###
 # gitignore template for Jupyter Notebooks

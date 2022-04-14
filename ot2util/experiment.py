@@ -93,7 +93,8 @@ class ExperimentManager:
         subprocess.run(f"scp {r} {src} {dst}", shell=True)
 
     def _command_template(self, protocol: Path, yaml_path: Path) -> str:
-        return f"{self.exe} {protocol}"  # -d {yaml_path}"
+        return f"echo '{self.exe} {protocol}' | sh"  # -d {yaml_path}"
+
 
     def _tar_transfer(
         self,
