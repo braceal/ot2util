@@ -47,11 +47,12 @@ def run(protocol: protocol_api.ProtocolContext):
     # protocol.bundled_data["config.yaml"] will contain the raw bytes of the config file
     # TODO: There is a bug in the opentrons code which does not pass this parameter
     #       correctly during opentrons_execute commands.
-    # cfg = SimpleProtocolConfig.from_bytes(protocol.bundled_data["config.yaml"])
-
-    # As a quick fix, we hard code a path to write config files to.
-    remote_dir = Path("/root/test1")
-    cfg = SimpleProtocolConfig.from_yaml(remote_dir / "config.yaml")
+    if "config.yaml" in protocol.bundled_data:
+        cfg = SimpleProtocolConfig.from_bytes(protocol.bundled_data["config.yaml"])
+    else:
+        # As a quick fix, we hard code a path to write config files to.
+        remote_dir = Path("/root/test1")
+        cfg = SimpleProtocolConfig.from_yaml(remote_dir / "config.yaml")
 
     # labware
     plate = protocol.load_labware(cfg.wellplate.name, cfg.wellplate.location)

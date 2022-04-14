@@ -79,7 +79,9 @@ def main(cfg: GridSearchConfig):
         # Run the experiment
         returncode = experiment_manager.run(experiment)
         if returncode != 0:
-            raise ValueError(f"Experiment {experiment.name} failed to run")
+            raise ValueError(
+                f"Experiment {experiment.name} exited with returncode: {returncode}"
+            )
 
 
 if __name__ == "__main__":
