@@ -12,6 +12,13 @@ pip install -r ot2util/requirements/ot2-minimal.txt
 pip install ot2util/
 ```
 
+Issuing commands from ssh causes the OT-2 to look for calibration files
+in the ~/.opentrons folder. You can update the calibration files via:
+```
+mv .opentrons/ .opentrons-back
+cp -r /var/data/* ~/.opentrons/
+```
+
 Locally:
 ```
 python3 -m venv ot2
