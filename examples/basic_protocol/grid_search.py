@@ -11,6 +11,8 @@ from ot2util.config import BaseSettings, parse_args
 from ot2util.experiment import Experiment, ExperimentManager
 from protocol import SimpleProtocolConfig
 
+import ot2util.camera as camera
+
 import logging
 
 logging.basicConfig()
@@ -41,6 +43,8 @@ class GridSearchConfig(BaseSettings):
     run_simulation: bool = True
     # Volume values to grid search
     volume_values: List[int] = [50, 100]
+    camera_id : int
+
 
 
 def main(cfg: GridSearchConfig):
@@ -50,6 +54,10 @@ def main(cfg: GridSearchConfig):
 
     # Create a protocol configuration with default parameters
     protocol_cfg = SimpleProtocolConfig.from_yaml("config.yaml")
+
+    # Initialize Camera
+    if not cfg.run_simulation:
+        camera.initialize_camera(cfg.camera_id)
 
     # Creat experiment manager to launch experiments
     experiment_manager = ExperimentManager(
@@ -78,6 +86,10 @@ def main(cfg: GridSearchConfig):
 
         # Run the experiment
         returncode = experiment_manager.run(experiment)
+        # After running the experiment, read the experiment result file
+        if not cfg.run_simulation:
+            
+            camera.color_recognize(Path(cfg.output_dir) / experiment_name, )
         if returncode != 0:
             raise ValueError(f"Experiment {experiment.name} failed to run")
 

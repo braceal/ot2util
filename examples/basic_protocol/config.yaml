@@ -11,8 +11,8 @@ wellplate:
     name: corning_96_wellplate_360ul_flat
     location: '1'
 tiprack:
-    name: opentrons_96_tiprack_20ul #opentrons_96_tiprack_1000ul
+    name: opentrons_96_tiprack_1000ul # opentrons_96_tiprack_20ul
     location: '8'
 pipette:
-    name: p20_single_gen2 #p1000_single_gen2
+    name: p1000_single_gen2 # p20_single_gen2
     mount: right

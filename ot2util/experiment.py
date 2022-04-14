@@ -3,8 +3,18 @@ from typing import Optional, Union
 from pathlib import Path
 from fabric import Connection
 from invoke.runners import Result
-from ot2util.config import ProtocolConfig, PathLike
+from ot2util.config import ProtocolConfig, PathLike, BaseSettings
 
+class ExperimentResult(BaseSettings):
+    target_well: str
+    next_tip_location: Optional[str]
+    next_empty_well: Optional[str]
+
+    def __init__(self, target_well: str, next_tip_location: Optional[str], next_empty_well: Optional[str]):
+        super().__init__()
+        self.target_well = target_well
+        self.next_tip_location = next_tip_location
+        self.next_empty_well = next_empty_well
 
 class Experiment:
     def __init__(
@@ -170,6 +180,11 @@ class ExperimentManager:
         result: Result = self.conn.run(command)
         self._write_log(result.stdout, experiment.output_dir / "stdout.log")
         self._write_log(result.stderr, experiment.output_dir / "stderr.log")
+
+        # Update the
+        ot2result = ExperimentResult("A1", "A2", "D6")
+        ot2result.dump_yaml(experiment.output_dir / "ot2_result.yaml")
+
         returncode: int = result.exited
         if returncode != 0:
             # Return early since something went wrong
@@ -196,3 +211,7 @@ class ExperimentManager:
         if self.conn is None:
             return self._run_local(experiment)
         return self._run_remote(experiment)
+
+    def read_experiment_result(self, experiment: Experiment) -> ExperimentResult:
+        ot2_result = ExperimentResult.load_yaml(experiment.output_dir / "ot2_result.yaml")
+        return ot2_result
