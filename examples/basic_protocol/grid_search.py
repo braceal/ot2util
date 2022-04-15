@@ -21,8 +21,10 @@ class GridSearchConfig(BaseSettings):
     # Remote setup parameters (None if running locally)
     # Remote directory path to stage experiments in
     remote_dir: Optional[Path] = None
-    # Remote host i.e. [user@]host[:port]
+    # Remote host i.e. [user@]host
     host: Optional[str] = None
+    # Port to connect to OT-2 with
+    port: int = 22
     # Private key path
     key_filename: Optional[str] = None
     # Path to opentrons_simulate or opentrons_execute directory
@@ -55,6 +57,7 @@ def main(cfg: GridSearchConfig):
     experiment_manager = ExperimentManager(
         cfg.run_simulation,
         cfg.host,
+        cfg.port,
         cfg.key_filename,
         cfg.opentrons_path,
         cfg.tar_transfer,

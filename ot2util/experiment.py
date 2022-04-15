@@ -30,6 +30,7 @@ class ExperimentManager:
         self,
         run_simulation: bool,
         host: Optional[str] = None,
+        port: int = 22,
         key_filename: Optional[str] = None,
         opentrons_path: Path = Path("/bin"),
         tar_transfer: bool = False,
@@ -43,8 +44,7 @@ class ExperimentManager:
         host : Optional[str], optional
             If specified will connect to the opentrons raspberry pi over
             ssh and allow jobs to be run remotely. To specify :obj:`host`
-            use the following format [user@]host[:port]. For example,
-            "deploy@web1:2202".
+            use the following format [user@]host. For example, "deploy@web1".
         key_filename : Optional[str], optional
             If :obj:`host` is specified, a path to your private key file
             must be supplied to the Fabric Connection. For example,
@@ -60,6 +60,7 @@ class ExperimentManager:
         opentrons_exe = "opentrons_simulate" if run_simulation else "opentrons_execute"
         self.exe = Path(opentrons_path) / opentrons_exe
         self.host = host
+        self.key_filename = key_filename
         self.tar_transfer = tar_transfer
 
         self.conn = None
@@ -69,7 +70,7 @@ class ExperimentManager:
                 connect_kwargs["key_filename"] = key_filename
 
             # TODO: Handle authentication in a better way
-            self.conn = Connection(host=host, port=22, connect_kwargs=connect_kwargs)
+            self.conn = Connection(host=host, port=port, connect_kwargs=connect_kwargs)
             # TODO: We may be able to add an optional proxy jump to connect
             #       to the robot from a remote location not connected to the
             #       robots local WiFi environment.
@@ -87,7 +88,8 @@ class ExperimentManager:
 
     def _scp(self, src: PathLike, dst: PathLike, recursive: bool = False) -> None:
         r = "-r" if recursive else ""
-        subprocess.run(f"scp {r} {src} {dst}", shell=True)
+        identity_file = "" if self.key_filename is None else f"-i {self.key_filename}"
+        subprocess.run(f"scp {identity_file} {r} {src} {dst}", shell=True)
 
     def _tar_transfer(
         self, experiment: Experiment, workdir: Path, remote_protocol: Path
