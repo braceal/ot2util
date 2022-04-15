@@ -64,15 +64,12 @@ class ExperimentManager:
 
         self.conn = None
         if host is not None:
-            # if key_filename is None:
-            #    raise ValueError("Path to private key file required. See key_filename.")
+            connect_kwargs = {}
+            if key_filename is not None:
+                connect_kwargs["key_filename"] = key_filename
 
             # TODO: Handle authentication in a better way
-            self.conn = Connection(
-                host=host,
-                port=22,
-                # connect_kwargs={"password": ""},
-            )
+            self.conn = Connection(host=host, port=22, connect_kwargs=connect_kwargs)
             # TODO: We may be able to add an optional proxy jump to connect
             #       to the robot from a remote location not connected to the
             #       robots local WiFi environment.
