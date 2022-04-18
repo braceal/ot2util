@@ -6,8 +6,8 @@ python grid_search.py -c grid_search.yaml
 See search_results/ for a simulated output.
 """
 from pathlib import Path
-from typing import List, Optional
-from ot2util.config import BaseSettings, parse_args
+from typing import List
+from ot2util.config import BaseSettings, OpentronsConfig, parse_args
 from ot2util.experiment import Experiment, ExperimentManager
 from protocol import SimpleProtocolConfig
 
@@ -18,20 +18,8 @@ logging.getLogger("paramiko.transport").setLevel(logging.DEBUG)
 
 
 class GridSearchConfig(BaseSettings):
-    # Remote setup parameters (None if running locally)
-    # Remote directory path to stage experiments in
-    remote_dir: Optional[Path] = None
-    # Remote host i.e. [user@]host
-    host: Optional[str] = None
-    # Port to connect to OT-2 with
-    port: int = 22
-    # Private key path
-    key_filename: Optional[str] = None
-    # Path to opentrons_simulate or opentrons_execute directory
-    opentrons_path: Path = Path("/usr/bin")
-    # Whether or not to tar files before transferring from remote to local
-    tar_transfer: bool = False
-
+    # Connect to one (or many) OT-2s
+    robots: List[OpentronsConfig] = []
     # Directory to write experimental results to
     output_dir: Path = ""
     # Path to protocol script containing run function
@@ -54,14 +42,7 @@ def main(cfg: GridSearchConfig):
     protocol_cfg = SimpleProtocolConfig.from_yaml("config.yaml")
 
     # Creat experiment manager to launch experiments
-    experiment_manager = ExperimentManager(
-        cfg.run_simulation,
-        cfg.host,
-        cfg.port,
-        cfg.key_filename,
-        cfg.opentrons_path,
-        cfg.tar_transfer,
-    )
+    experiment_manager = ExperimentManager(cfg.run_simulation, cfg.robots)
 
     # Count number of experiments to label directories
     num_experiments = len(str(len(cfg.volume_values)))
@@ -72,12 +53,8 @@ def main(cfg: GridSearchConfig):
         protocol_cfg.volume = volume
 
         # Create new experiment
-        experiment_name = f"experiment-{itr:0{num_experiments}d}"
-        if cfg.remote_dir is not None:
-            protocol_cfg.workdir = cfg.remote_dir / experiment_name
-        experiment = Experiment(
-            experiment_name, cfg.output_dir, cfg.protocol, protocol_cfg
-        )
+        name = f"experiment-{itr:0{num_experiments}d}"
+        experiment = Experiment(name, cfg.output_dir, cfg.protocol, protocol_cfg)
 
         # Run the experiment
         returncode = experiment_manager.run(experiment)
