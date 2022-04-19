@@ -19,7 +19,7 @@ mv .opentrons/ .opentrons-back
 cp -r /var/data/* ~/.opentrons/
 ```
 
-Locally:
+Pip Locally:
 ```
 python3 -m venv ot2
 source ot2/bin/activate
@@ -28,6 +28,17 @@ pip3 install -r requirements/dev.txt
 pip3 install -r requirements/requirements.txt
 pip3 install -e .
 ```
+
+Conda Locally : 
+```
+conda create -n ot2 python=3.9 
+conda activate ot2
+pip install -U pip setuptools wheel
+pip install -r requirements/dev.txt
+pip install -r requirements/requirements.txt
+pip install -e .
+```
+
 To run dev tools (flake8, black, mypy): `make`
 
 ## Setup
