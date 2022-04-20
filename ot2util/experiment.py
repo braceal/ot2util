@@ -67,7 +67,7 @@ class ExperimentManager:
         if host is not None:
             connect_kwargs = {}
             if key_filename is not None:
-                connect_kwargs["key_filename"] = key_filename
+                connect_kwargs["key_filename"] = [key_filename]
 
             # TODO: Handle authentication in a better way
             self.conn = Connection(host=host, port=port, connect_kwargs=connect_kwargs)
