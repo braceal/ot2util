@@ -1,3 +1,11 @@
+"""Run a grid search to test different volume values.
+
+To run it, update the grid_search.yaml configuration file and run:
+python grid_search_algorithm.py -c grid_search.yaml
+
+See search_results/ for a simulated output.
+"""
+
 #ot2util imports 
 from ot2util.algorithm import Algorithm 
 from ot2util.experiment import Experiment
