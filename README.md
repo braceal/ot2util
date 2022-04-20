@@ -29,7 +29,7 @@ pip3 install -r requirements/requirements.txt
 pip3 install -e .
 ```
 
-Conda Locally : 
+Conda Locally: 
 ```
 conda create -n ot2 python=3.9 
 conda activate ot2
@@ -44,8 +44,7 @@ To run dev tools (flake8, black, mypy): `make`
 ## Setup
 
 When setting up an ssh key to connect to the opentrons, it is
-helpful to make a new one without a passphrase. At the moment,
-each file transfer requires the ssh passphrase to be entered.
+helpful to make a new one without a passphrase.
 For more information on setting up an ssh connection see:
 - https://support.opentrons.com/en/articles/3203681-setting-up-ssh-access-to-your-ot-2
 - https://support.opentrons.com/en/articles/3287453-connecting-to-your-ot-2-with-ssh
