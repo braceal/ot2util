@@ -36,9 +36,8 @@ class GridSearchConfig(BaseSettings):
     output_dir: Path = ""
     # Path to protocol script containing run function
     protocol: Path = ""
-    # TODO: Add this protocol config here
-    # Configuration of the protocol
-    # protocol: SimpleProtocolConfig
+    # Base configuration options for the protocol
+    base_config: Path = Path("config.yaml")
     # Toggle simulation
     run_simulation: bool = True
     # Volume values to grid search
@@ -51,7 +50,7 @@ def main(cfg: GridSearchConfig):
     cfg.output_dir.mkdir(exist_ok=True)
 
     # Create a protocol configuration with default parameters
-    protocol_cfg = SimpleProtocolConfig.from_yaml("config.yaml")
+    protocol_cfg = SimpleProtocolConfig.from_yaml(cfg.base_config)
 
     # Creat experiment manager to launch experiments
     experiment_manager = ExperimentManager(
