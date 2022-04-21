@@ -110,7 +110,7 @@ def main(cfg: GridSearchConfig):
             # Update the protocol configuration with the experiment result
             result = ExperimentResult.from_yaml(cfg.output_dir / experiment_name / "experiment_result.yaml")
             coordinate = camera_obj.convert_coordinate(result.cur_target_well)
-            RGB_value, HSV_value = camera_obj.color_recognize(Path(cfg.output_dir) / experiment_name, coordinate, num_experiments)
+            RGB_value, HSV_value = camera_obj.color_recognize(Path(cfg.output_dir) / experiment_name, coordinate, itr)
             protocol_cfg.target_tip = result.next_target_tip
             protocol_cfg.target_well = result.next_target_well
             print(f"Experiment-{iter}: target_well: {result.cur_target_well} RGB_value: {RGB_value}, HSV_value: {HSV_value}")
