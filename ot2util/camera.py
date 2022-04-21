@@ -7,7 +7,7 @@ import pathlib
 
 class Camera():
 
-    def initialize_camera(self, camera_id = 2):
+    def __init__(self, camera_id = 2):
         self.cap = cv2.VideoCapture(camera_id)
         self.cap.set(3, 1920)
         self.cap.set(4, 1280)

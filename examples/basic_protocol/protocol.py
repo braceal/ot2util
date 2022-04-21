@@ -43,6 +43,9 @@ class SimpleProtocolConfig(ProtocolConfig):
         name="opentrons_96_tiprack_300ul", location="1"
     )
     pipette: InstrumentConfig = InstrumentConfig(name="p300_single", mount="left")
+    sourceplate: LabwareConfig = LabwareConfig(
+        name="corning_6_wellplate_16.8ml_flat", location="3"
+    )
 
 
 # metadata
@@ -75,7 +78,7 @@ def run(protocol: protocol_api.ProtocolContext):
     # labware
     plate = protocol.load_labware(cfg.wellplate.name, cfg.wellplate.location)
     tiprack = protocol.load_labware(cfg.tiprack.name, cfg.tiprack.location)
-
+    sourceplate = protocol.load_labware(cfg.sourceplate.name, cfg.sourceplate.location)
     # pipettes
     pipette = protocol.load_instrument(
         cfg.pipette.name, cfg.pipette.mount, tip_racks=[tiprack]
@@ -84,10 +87,12 @@ def run(protocol: protocol_api.ProtocolContext):
     # commands
     for i, src_well in enumerate(source_wells):
         pipette.pick_up_tip(location=target_tip)
-        pipette.aspirate(source_volumes[i], plate[src_well])
+        pipette.aspirate(source_volumes[i], sourceplate[src_well])
         pipette.dispense(source_volumes[i], plate[target_well])
         pipette.drop_tip()
         target_tip = next_location(target_tip)
+        if target_tip == "":
+            raise Exception("No more tips")
 
     result = {
         "next_target_tip": target_tip,

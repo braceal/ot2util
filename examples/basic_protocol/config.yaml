@@ -12,6 +12,9 @@ target_well: "B1"
 wellplate:
     name: corning_96_wellplate_360ul_flat
     location: '1'
+sourceplate:
+    name: corning_6_wellplate_16.8ml_flat
+    location: '3'
 tiprack:
     name:  opentrons_96_tiprack_20ul # opentrons_96_tiprack_1000ul 
     location: '8'

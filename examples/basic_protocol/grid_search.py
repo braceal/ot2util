@@ -72,10 +72,10 @@ def main(cfg: GridSearchConfig):
     # Create a protocol configuration with default parameters
     protocol_cfg = SimpleProtocolConfig.from_yaml("config.yaml")
 
-    camera_obj = camera.Camera(cfg.camera_id)
+    
     # Initialize Camera
     if not cfg.run_simulation:
-        camera_obj.initialize_camera(cfg.camera_id)
+        camera_obj = camera.Camera(cfg.camera_id)
 
     # Creat experiment manager to launch experiments
     experiment_manager = ExperimentManager(
@@ -86,24 +86,14 @@ def main(cfg: GridSearchConfig):
         cfg.tar_transfer,
     )
 
-    # Count number of experiments to label directories
-    num_experiments = len(str(len(cfg.volume_values)))
-
-    # initialize the experiments
-    # next_tip = protocol_cfg.next_tip
-    # target_well = protocol_cfg.target_well
-    # # next_empty_well = protocol_cfg.next_empty_well
-    # source_wells = protocol_cfg.source_wells
-
-
     # Loop over specified volume values and update configuration
     num_colors = len(protocol_cfg.source_wells)
     volumes = np.arange(cfg.volume_min, cfg.volume_max, cfg.volume_step)
-    
+    print(f"volumes: {volumes}")
 
-    for itr, volume_list in enumerate(itertools.permutations(volumes, num_colors)):
+    for itr, volume_list in enumerate(itertools.permutations(volumes.tolist(), num_colors)):
         # Update search parameter
-        protocol_cfg.source_volumes = volume_list
+        protocol_cfg.source_volumes = list(volume_list)
     
         # Create new experiment
         experiment_name = f"experiment-{itr}"
