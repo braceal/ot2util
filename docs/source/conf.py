@@ -32,22 +32,15 @@ release = '0.1a'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.doctest',
     'sphinx.ext.autodoc',
-    'sphinx.ext.autosummary',
     'sphinx.ext.napoleon',
 ]
 
-#Autosummary settings 
-autosummary_generate = True  # Turn on sphinx.ext.autosummary
-autosummary_imported_members = False
 #Autodoc settings 
 #Need to figure these out. See https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#confval-autodoc_default_options
 autodoc_default_options = { 
     'members': True,
-    'undoc-members': False,
-    'imported-members': False,
-    'inherited-members': False, 
+    'undoc-members': True,
 }
 
 # Napoleon settings
