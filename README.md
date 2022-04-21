@@ -38,3 +38,16 @@ each file transfer requires the ssh passphrase to be entered.
 For more information on setting up an ssh connection see:
 - https://support.opentrons.com/en/articles/3203681-setting-up-ssh-access-to-your-ot-2
 - https://support.opentrons.com/en/articles/3287453-connecting-to-your-ot-2-with-ssh
+
+## Docs 
+Install docs requirements: 
+```
+pip install -r requirements/docs.txt
+```
+
+Make docs: 
+```
+cd docs/
+make html
+```
+
