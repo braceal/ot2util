@@ -86,7 +86,7 @@ def run(protocol: protocol_api.ProtocolContext):
 
     # commands
     for i, src_well in enumerate(source_wells):
-        pipette.pick_up_tip(location=target_tip)
+        pipette.pick_up_tip(location=tiprack.wells_by_name()[target_tip])
         pipette.aspirate(source_volumes[i], sourceplate[src_well])
         pipette.dispense(source_volumes[i], plate[target_well])
         pipette.drop_tip()
