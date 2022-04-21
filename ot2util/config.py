@@ -44,6 +44,7 @@ class InstrumentConfig(BaseSettings):
 class ExperimentResult(BaseSettings):
     next_target_tip : str
     next_target_well : str
+    cur_target_well : str
 
 
 def parse_args() -> argparse.Namespace:
