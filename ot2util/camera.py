@@ -154,6 +154,6 @@ class Camera():
         return RGB_color, hsv_avg
 
     def convert_coordinate(self, coordinate_org = 'A1'):
-        x = 'H' - coordinate_org[0]
+        x = int('H') - int(coordinate_org[0])
         y = int(coordinate_org[1:]) - 1
         return np.array([x, y])
