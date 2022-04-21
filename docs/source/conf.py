@@ -34,7 +34,11 @@ release = '0.1a'
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
+    'sphinx.ext.autosummary'
 ]
+
+#Autosummary settings
+autosummary_generate = True  # Turn on sphinx.ext.autosummary
 
 #Autodoc settings 
 #Need to figure these out. See https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#confval-autodoc_default_options

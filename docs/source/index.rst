@@ -14,7 +14,8 @@ ot2util Documentation
 ot2util: Performing non-trivial protocols with Opentrons OT2 
 
 .. toctree::
-   pages/api_index
+   pages/api
+   pages/usage_index
 
 
 
