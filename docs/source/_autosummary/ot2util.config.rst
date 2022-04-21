@@ -1,4 +1,4 @@
-﻿ot2util.config
+ot2util.config
 ==============
 
 .. automodule:: ot2util.config

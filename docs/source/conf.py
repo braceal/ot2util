@@ -37,17 +37,34 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.napoleon',
 ]
+
+#Autosummary settings 
 autosummary_generate = True  # Turn on sphinx.ext.autosummary
 autosummary_imported_members = False
+#Autodoc settings 
 #Need to figure these out. See https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#confval-autodoc_default_options
 autodoc_default_options = { 
     'members': True,
-    'imported-members': False,
     'undoc-members': False,
+    'imported-members': False,
     'inherited-members': False, 
-    'imported-members': False, 
-
 }
+
+# Napoleon settings
+napoleon_google_docstring = True
+napoleon_numpy_docstring = True
+napoleon_include_init_with_doc = True
+napoleon_include_private_with_doc = False
+napoleon_include_special_with_doc = True
+napoleon_use_admonition_for_examples = False
+napoleon_use_admonition_for_notes = False
+napoleon_use_admonition_for_references = False
+napoleon_use_ivar = False
+napoleon_use_param = False
+napoleon_use_rtype = False
+napoleon_preprocess_types = False
+napoleon_type_aliases = None
+napoleon_attr_annotations = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -68,4 +85,4 @@ html_theme = 'sphinx_rtd_theme'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+# html_static_path = ['_static'] #can comment out for now. Removes warning

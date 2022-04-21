@@ -5,4 +5,5 @@ API
     :toctree: _autosummary
     :recursive: 
 
-    ot2util
+    ot2util.config 
+    ot2util.experiment 

@@ -1,4 +1,4 @@
-﻿ot2util.experiment
+ot2util.experiment
 ==================
 
 .. automodule:: ot2util.experiment
