@@ -2,17 +2,19 @@ source_wells:
 - A1
 - A2
 - A3
-destination_wells:
-- B1
-- B2
-- B3
-volume: 100
+source_volumes:
+- 10
+- 5
+- 10
+target_tip: "A1"
+target_well: "B1"
+
 wellplate:
     name: corning_96_wellplate_360ul_flat
     location: '1'
 tiprack:
-    name: opentrons_96_tiprack_1000ul # opentrons_96_tiprack_20ul
+    name:  opentrons_96_tiprack_20ul # opentrons_96_tiprack_1000ul 
     location: '8'
 pipette:
-    name: p1000_single_gen2 # p20_single_gen2
+    name: p20_single_gen2 #p1000_single_gen2 # 
     mount: right

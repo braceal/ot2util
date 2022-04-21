@@ -6,7 +6,8 @@ host: root@192.168.0.102 # root@192.168.0.102
 key_filename: /User/apple/.ssh/id_rsa
 # opentrons_path: /home/locobot/.local/bin
 #:31950
+camera_id: 3
 opentrons_path: "/bin"
-volume_values:
-- 50
-- 30
+volume_min: 5
+volume_max: 15
+volume_step: 5

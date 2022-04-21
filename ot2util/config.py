@@ -41,6 +41,10 @@ class InstrumentConfig(BaseSettings):
     name: str
     mount: str
 
+class ExperimentResult(BaseSettings):
+    next_target_tip : str
+    next_target_well : str
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()

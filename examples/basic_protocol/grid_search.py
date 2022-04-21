@@ -7,17 +7,32 @@ See search_results/ for a simulated output.
 """
 from pathlib import Path
 from typing import List, Optional
-from ot2util.config import BaseSettings, parse_args
+from ot2util.config import BaseSettings, parse_args, ExperimentResult
 from ot2util.experiment import Experiment, ExperimentManager
 from protocol import SimpleProtocolConfig
 
+
+import numpy as np
 import ot2util.camera as camera
+import itertools
 
 import logging
 
 logging.basicConfig()
 logging.getLogger("paramiko.transport").setLevel(logging.DEBUG)
 
+
+def next_location(cur_location : str) -> str:
+    letter = cur_location[0]
+    number = cur_location[1:]
+    if number == "12":
+        number = "1"
+        letter = chr(ord(letter) + 1)
+    else:
+        number = str(int(number) + 1)
+    if letter == "I" and number == "12":
+        return ""
+    return letter + number
 
 class GridSearchConfig(BaseSettings):
     # Remote setup parameters (None if running locally)
@@ -42,8 +57,10 @@ class GridSearchConfig(BaseSettings):
     # Toggle simulation
     run_simulation: bool = True
     # Volume values to grid search
-    volume_values: List[int] = [50, 100]
-    camera_id : int
+    volume_min : int = 5
+    volume_max : int = 20
+    volume_step : int = 5
+    camera_id : int = 2
 
 
 
@@ -55,9 +72,10 @@ def main(cfg: GridSearchConfig):
     # Create a protocol configuration with default parameters
     protocol_cfg = SimpleProtocolConfig.from_yaml("config.yaml")
 
+    camera_obj = camera.Camera(cfg.camera_id)
     # Initialize Camera
     if not cfg.run_simulation:
-        camera.initialize_camera(cfg.camera_id)
+        camera_obj.initialize_camera(cfg.camera_id)
 
     # Creat experiment manager to launch experiments
     experiment_manager = ExperimentManager(
@@ -71,13 +89,24 @@ def main(cfg: GridSearchConfig):
     # Count number of experiments to label directories
     num_experiments = len(str(len(cfg.volume_values)))
 
-    # Loop over specified volume values and update configuration
-    for itr, volume in enumerate(cfg.volume_values):
-        # Update search parameter
-        protocol_cfg.volume = volume
+    # initialize the experiments
+    # next_tip = protocol_cfg.next_tip
+    # target_well = protocol_cfg.target_well
+    # # next_empty_well = protocol_cfg.next_empty_well
+    # source_wells = protocol_cfg.source_wells
 
+
+    # Loop over specified volume values and update configuration
+    num_colors = len(protocol_cfg.source_wells)
+    volumes = np.arange(cfg.volume_min, cfg.volume_max, cfg.volume_step)
+    
+
+    for itr, volume_list in enumerate(itertools.permutations(volumes, num_colors)):
+        # Update search parameter
+        protocol_cfg.source_volumes = volume_list
+    
         # Create new experiment
-        experiment_name = f"experiment-{itr:0{num_experiments}d}"
+        experiment_name = f"experiment-{itr}"
         if cfg.remote_dir is not None:
             protocol_cfg.workdir = cfg.remote_dir / experiment_name
         experiment = Experiment(
@@ -88,8 +117,13 @@ def main(cfg: GridSearchConfig):
         returncode = experiment_manager.run(experiment)
         # After running the experiment, read the experiment result file
         if not cfg.run_simulation:
-            
-            camera.color_recognize(Path(cfg.output_dir) / experiment_name, )
+            # Update the protocol configuration with the experiment result
+            result = ExperimentResult.from_yaml(cfg.output_dir / experiment_name / "experiment_result.yaml")
+            coordinate = camera_obj.convert_coordinate(result.cur_target_well)
+            RGB_value, HSV_value = camera_obj.color_recognize(Path(cfg.output_dir) / experiment_name, coordinate, num_experiments)
+            protocol_cfg.target_tip = result.next_target_tip
+            protocol_cfg.target_well = result.next_target_well
+            print(f"Experiment-{iter}: target_well: {result.cur_target_well} RGB_value: {RGB_value}, HSV_value: {HSV_value}")
         if returncode != 0:
             raise ValueError(f"Experiment {experiment.name} failed to run")
 

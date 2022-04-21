@@ -14,15 +14,28 @@ Modify config.yaml as needed
 from typing import List
 from pathlib import Path
 from opentrons import protocol_api
-from ot2util.config import ProtocolConfig, LabwareConfig, InstrumentConfig
+from ot2util.config import ProtocolConfig, LabwareConfig, InstrumentConfig, ExperimentResult
 
+
+def next_location(cur_location : str) -> str:
+    letter = cur_location[0]
+    number = cur_location[1:]
+    if number == "12":
+        number = "1"
+        letter = chr(ord(letter) + 1)
+    else:
+        number = str(int(number) + 1)
+    if letter == "I" and number == "12":
+        return ""
+    return letter + number
 
 class SimpleProtocolConfig(ProtocolConfig):
     # File must be named config
     source_wells: List[str] = ["A1", "A2", "A3"]
-    destination_wells: List[str] = ["B1", "B2", "B3"]
+    source_volumes: List[int] = [10, 5, 10]
     # Volume to aspirate and dispense
-    volume: int = 100
+    target_tip: str = "A1"
+    target_well: str = "B1"
     wellplate: LabwareConfig = LabwareConfig(
         name="corning_96_wellplate_360ul_flat", location="2"
     )
@@ -53,6 +66,12 @@ def run(protocol: protocol_api.ProtocolContext):
     remote_dir = Path("/root/test1")
     cfg = SimpleProtocolConfig.from_yaml(remote_dir / "config.yaml")
 
+    target_tip = cfg.target_tip
+    target_well = cfg.target_well
+    # next_empty_well = protocol_cfg.next_empty_well
+    source_wells = cfg.source_wells
+    source_volumes = cfg.source_volumes
+
     # labware
     plate = protocol.load_labware(cfg.wellplate.name, cfg.wellplate.location)
     tiprack = protocol.load_labware(cfg.tiprack.name, cfg.tiprack.location)
@@ -63,13 +82,21 @@ def run(protocol: protocol_api.ProtocolContext):
     )
 
     # commands
-    pipette.pick_up_tip()
-    for src_well, dst_well in zip(cfg.source_wells, cfg.destination_wells):
-        pipette.aspirate(cfg.volume, plate[src_well])
-        pipette.dispense(cfg.volume, plate[dst_well])
-    pipette.drop_tip()
+    for i, src_well in enumerate(source_wells):
+        pipette.pick_up_tip(location=target_tip)
+        pipette.aspirate(source_volumes[i], plate[src_well])
+        pipette.dispense(source_volumes[i], plate[target_well])
+        pipette.drop_tip()
+        target_tip = next_location(target_tip)
 
-    (cfg.workdir / "experiment-result").touch()
+    result = {
+        "next_target_tip": target_tip,
+        "cur_target_well": target_well,
+        "next_target_well": next_location(target_well),
+    }
+    experiment_result = ExperimentResult(**result)
+    experiment_result.dump_yaml(cfg.workdir / "experiment_result.yaml")
+    # (cfg.workdir / "experiment-result").touch()
 
 
 if __name__ == "__main__":
