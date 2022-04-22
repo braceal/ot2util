@@ -7,6 +7,10 @@ from ot2util.config import ProtocolConfig, PathLike
 
 
 class Experiment:
+    """Encapsulation of a singular experiment. 
+
+    Contains information local to a singular protocol. Will be executed by experiment manager 
+    """
     def __init__(
         self,
         name: str,
@@ -26,6 +30,8 @@ class Experiment:
 
 
 class ExperimentManager:
+    """Manage a set of experiments to be run in the same session.
+    """
     def __init__(
         self,
         run_simulation: bool,
@@ -175,6 +181,17 @@ class ExperimentManager:
         return proc.returncode
 
     def run(self, experiment: Experiment) -> int:
+        """Execute an experiment object. 
+
+        Will execute an experiment according to the paramters of the experiment. 
+        Can determine to run locally or on the OT2. 
+
+        Args:
+            experiment (Experiment): Protocol to be run. Contains necesary information to run trial. 
+
+        Returns:
+            int: Return code of experiment. 0 is success, anything other than 0 is a failure. 
+        """
         if self.conn is None:
             return self._run_local(experiment)
         return self._run_remote(experiment)
