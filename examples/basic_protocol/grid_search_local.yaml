@@ -1,0 +1,7 @@
+output_dir: "search_results" #this folder will be created in the current directory
+protocol: "protocol.py" #this is a protocol file you write 
+run_simulation: true
+opentrons_path: ~/anaconda3/envs/ot2/bin/ 
+volume_values: #these values will be accessible in your algorithm
+- 5
+- 10

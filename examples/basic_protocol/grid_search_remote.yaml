@@ -1,0 +1,10 @@
+output_dir: "search_results"
+remote_dir: /root/test1
+protocol: "protocol.py"
+run_simulation: false
+host: root@192.168.0.103 # root@robotIP
+key_filename: ~/.ssh/ot2_ssh_key #path to your ssh key
+opentrons_path: "/bin" #default environment for opentrons_execute on the OT2 pi
+volume_values:
+- 5
+- 10
