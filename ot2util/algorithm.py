@@ -62,7 +62,7 @@ class Algorithm_Config(BaseSettings):
 
 
 class Algorithm:
-    """Super class for user implemented search algorithms. Users should implement `__len__(), run()`
+    """Super class for user implemented search algorithms. Users should implement `run()`
     """
     def __init__(self, config_path: PathLike) -> None:
         """Initialize the algorithm superclass. Will only create the config model. 
@@ -88,10 +88,7 @@ class Algorithm:
         
         return f"{type(self)}({self.config.json()})"
 
-    #User should implement these    
-    def __len__(self) -> int: 
-        raise NotImplementedError 
-
+    #User should implement this
     def run(self, *args: Any, **kwargs: Any) -> None: 
         raise NotImplementedError
 
