@@ -48,3 +48,15 @@ helpful to make a new one without a passphrase.
 For more information on setting up an ssh connection see:
 - https://support.opentrons.com/en/articles/3203681-setting-up-ssh-access-to-your-ot-2
 - https://support.opentrons.com/en/articles/3287453-connecting-to-your-ot-2-with-ssh
+
+## Contributing
+
+Please post an issue to request access to push new code, then run:
+```
+git checkout -b <branchname>
+git add <files you want>
+git commit -m 'message'
+git push
+```
+Then open a pull request for a code review.
+
