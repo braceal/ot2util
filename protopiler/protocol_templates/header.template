@@ -1,0 +1,11 @@
+from typing import List
+from pathlib import Path
+from opentrons import protocol_api
+from ot2util.config import ProtocolConfig, LabwareConfig, InstrumentConfig
+
+#metadata#
+
+def run(protocol: protocol_api.ProtocolContext):
+
+    deck = {} 
+    pipettes = {} 
