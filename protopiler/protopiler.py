@@ -1,10 +1,11 @@
+import pathlib
 import re
 import yaml
 import json 
 import argparse 
 from pathlib import Path 
 from itertools import repeat
-from typing import List, Optional, TypeVar, Union
+from typing import List, Optional, TypeVar, Union, Dict
 
 from ot2util.config import BaseSettings
 
@@ -80,10 +81,6 @@ class ProtoPiler:
         Returns:
             None : None
         """
-        # load metadata, optional 
-        self.metadata = self.config.get('metadata', None)
-
-        
         self.labware = []
         self.pipettes = []
 
@@ -92,7 +89,9 @@ class ProtoPiler:
         # i.e i should be able to tell if a block is a labware/pipette vs a command block 
         
         if isinstance(self.config, dict) and 'equipment' in self.config and 'commands' in self.config:
-            
+            # load metadata, optional 
+            self.metadata = self.config.get('metadata', None)
+
             #load the labware 
             for data in self.config['equipment']:
                 for _name, elem_data in data.items(): 
@@ -137,7 +136,7 @@ class ProtoPiler:
                 self.pipette_to_mount[element.name] = [element.mount]
 
     
-    def create_protocol(self, out_file: PathLike) -> None: 
+    def yaml_to_protocol(self, out_file: PathLike) -> None: 
 
         protocol = [] 
         
@@ -356,6 +355,80 @@ class ProtoPiler:
 
             for vol, src, dst in zip(volumes, sources, destinations): 
                 yield vol, src, dst  
+
+    def protocol_to_yaml(self, protocol_path: PathLike, yaml_path: PathLike) -> None:
+        protocol_python = open(protocol_path).readlines() 
+
+        metadata = self._find_protocol_metadata(protocol_python) 
+        labware = self._find_protocol_labware(protocol_python)
+        pipettes = self._find_protocol_pipettes(protocol_python)
+        commands = [] 
+
+        
+    def _find_protocol_metadata(self, protocol_python: List[str]) -> Union[None, Dict]:
+        metadata = None
+        metadata_flag = False
+        for line in protocol_python: 
+            if 'metadata' in line or metadata_flag:
+                if metadata is None: 
+                    metadata = ['{'] 
+                    metadata_flag = True 
+
+                if '{' in line and '}' in line: 
+                    print(line)
+                    print('one-liner')
+                    metadata = line.split("=")[-1]
+                    metadata = json.loads(metadata)
+                    metadata_flag = False 
+
+                else: 
+                    if line.strip().endswith("{"): 
+                        continue 
+                    if line.strip().endswith("}"):
+                        metadata_flag = False 
+                        metadata.append("}")
+                        metadata = json.loads(''.join(metadata))
+                        continue
+
+                    metadata.append(line)
+
+        return metadata 
+    
+    def _find_protocol_labware(self, protocol_python: List[str]) -> List[str]: 
+
+        labware = {} 
+        for line in protocol_python: 
+            if 'load_labware' in line: 
+                line = line.split('(')[-1].replace(")", '')
+                labware_name, location = line.split(",")
+                labware_name = labware_name.strip().replace("\"", '')
+                location = location.strip().replace("\"", '')
+                labware[labware_name] = location
+        
+
+        return labware
+
+    def _find_protocol_pipettes(self, protocol_python: List[str]) -> List[str]:
+
+        pipettes = {}
+        for line in protocol_python:
+            if 'load_instrument' in line:
+                line = line.split('(')[-1].replace(")", '')
+                print(line)
+                pipette_name, mount, *_tipracks = line.split(",")
+                pipette_name = pipette_name.strip().replace("\"", '')
+                mount = mount.strip().replace("\"", '')
+                pipettes[pipette_name] = mount
+
+        print(pipettes)
+
+        return pipettes
+
+    def _find_protocol_instructions(self, protocol_python: List[str]) -> List[str]:
+        pass
+
+
+
                 
 
 def parse_args() -> argparse.Namespace:
@@ -371,7 +444,8 @@ def parse_args() -> argparse.Namespace:
 def main(config_path):
     ppiler = ProtoPiler(config_path)
 
-    ppiler.create_protocol(out_file='test_out.py')
+    ppiler.yaml_to_protocol(out_file='test_out.py')
+    ppiler.protocol_to_yaml(protocol_path='test_out.py', yaml_path='reconstructed.yaml')
 
 if __name__ == "__main__":
     args = parse_args()
