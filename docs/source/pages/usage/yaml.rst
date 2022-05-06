@@ -7,22 +7,13 @@ Writing an Algorithm YAML
 Running a Simulation Algorithm
 ******************************
 
-Fields 
-^^^^^^^
-    - :code:`remote_dir: Optional[Path]` a pathlike object pointing to place to stage experiments on remote OT2 pointing
-    - :code:`host: Optional[str]` remote host i.e. :code:`[user@]host`
-    - :code:`port: int` port to connect via ssh. Defaults to 22 
-    - :code:`key_filename: Optional[Path]` path to private key for OT2 
-    - :code:`opentrons_path: Optional[Path]` path to opentrons_simulate/opentrons_execute programs (point to bin folder they exist in)
-    - :code:`tar_transfer: bool` whether to tar files before transferring from remote to local. Slow operation, avoid if possible 
-    - :code:`output_dir: Path` directory to write experimental results to
-    - :code:`protocol: Path` path to protocol script to run protocol 
-    - :code:`run_simulation: bool` whether or not to run a simulation of protocol or execute on OT2
+Things needed: 
+    * An output directory (part of :py:class:`Experiment<ot2util.config.ExperimentConfig>`)
+    * A protocol file and accompanying configuration to run (part of :py:class:`Experiment<ot2util.config.ExperimentConfig>`)
+    * Flag to run the sumulation :code:`run_simulation: True` (part of :py:class:`Experiment<ot2util.config.ExperimentConfig>`)
 
-These values are the values that should be present in any algorithm. You can run an simulation remotely on 
-the OT2 pi, and if you do these fields will be required, but if you just want to run a simulation on your local 
-computer, do not include :code:`remote_dir, host, port, key_filename, tar_transfer`. 
-fields in your YAML. Below is an example of a grid search algorithm yaml file. 
+These values should be present in any simulation you run. Adding information from other classes could result in exceptions. 
+An example of a local grid search simulation is shown below. 
 
 .. literalinclude:: ../../../../examples/basic_protocol/grid_search_local.yaml
     :linenos:
@@ -34,19 +25,14 @@ required by the ot2util package. You can include any valid yaml here and it will
 Running an Algorithm on OT2
 *****************************
 
-Fields 
-^^^^^^^
-    - :code:`remote_dir: Optional[Path]` a pathlike object pointing to place to stage experiments on remote OT2 pointing
-    - :code:`host: Optional[str]` remote host i.e. :code:`[user@]host`
-    - :code:`port: int` port to connect via ssh. Defaults to 22 
-    - :code:`key_filename: Optional[Path]` path to private key for OT2 
-    - :code:`opentrons_path: Optional[Path]` path to opentrons_simulate/opentrons_execute programs (point to bin folder they exist in)
-    - :code:`tar_transfer: bool` whether to tar files before transferring from remote to local. Slow operation, avoid if possible 
-    - :code:`output_dir: Path` directory to write experimental results to
-    - :code:`protocol: Path` path to protocol script to run protocol 
+Things Needed: 
+    * List of robots (see :py:class:`~ot2util.config.OpentronsConfig`)
+    * An output directory (part of :py:class:`Experiment<ot2util.config.ExperimentConfig>`)
+    * A protocol file and accompanying configuration to run (part of :py:class:`Experiment<ot2util.config.ExperimentConfig>`)
+    * Flag to run the sumulation :code:`run_simulation: False` (part of :py:class:`Experiment<ot2util.config.ExperimentConfig>`)
 
-These fields are available for running an algorithm on the OT2. :code:`tar_transfer` is not required, but will default to false. 
-An example of the grid_search algorithm yaml run on the OT2 is shown below. 
+Other values, such as :code:`volume_values` above, will be available for you to use in your algorithm, but are not 
+required by the ot2util package. You can include any valid yaml here and it will be accessible in your aglorithm. 
 
 .. literalinclude:: ../../../../examples/basic_protocol/grid_search_remote.yaml
     :linenos:
@@ -60,13 +46,14 @@ Writing a Protocol YAML
 Protocol YAMLs are what acompany individual protocols (algorithms run many protocols, protocols are the instructions of the experiment.)
 Protocols include information regarding the setup of the OT2, and which items to move where and so on. 
 
-Fields 
-^^^^^^^
-    - :code:`source_wells: list[str]` list of strings refering to location in the wellplate of source materials
-    - :code:`destination_wells: list[str]` list of strings referring to location in the wellplate of destination location 
-    - :code:`volume: int` integer reffering to volume of liquid to aspirate/dispense 
-    - :code:`wellplate: dict{name:str, location:str}` wellplate object, need to know what it is and where it is 
-    - :code:`pipette: dict{name:str, mount:str}` pipette on the machine, need to know what it is and where it is
+Things that are needed:
+    * One or more wellplate (:py:class:`Labware<ot2util.config.LabwareConfig>`) objects
+    * One or more tiprack (:py:class:`Labware<ot2util.config.LabwareConfig>`) objects
+    * One or two pipette (:py:class:`Instrument<ot2util.config.InstrumentConfig>`) objects
+
+Optionally, the user can define other things to go into this file that would specify particulars of the protocol. Users
+would have to make a config object to handle this, but as long as your config has the required objects specified above, it will work. 
+
 
 Below is an example protocol yaml file: 
 
