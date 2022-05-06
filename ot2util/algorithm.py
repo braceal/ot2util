@@ -1,3 +1,6 @@
+"""Abstract class usefull for implementing your own search algorithms on the OT2.
+"""
+
 from typing import Any, Optional
 from ot2util.config import ExperimentConfig
 from ot2util.experiment import ExperimentManager
