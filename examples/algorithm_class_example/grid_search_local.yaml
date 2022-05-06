@@ -1,0 +1,8 @@
+output_dir: "search_results"
+protocol: "protocol.py"
+run_simulation: True
+# host: root@192.168.0.103 # root@192.168.0.102 
+opentrons_path: "/home/kyle/miniconda3/envs/ot2/bin/"
+volume_values:
+- 5
+- 10
