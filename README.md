@@ -65,8 +65,10 @@ mirroring the python module directory/file structure. Test file names
 should have the form `test_<module>.py`. Test cases can be run with:
 ```
 pytest test -vs
+```
 
-To make the documentation with readthedocs: 
+To make the documentation with readthedocs:
+
 ```
 cd docs/
 make html
