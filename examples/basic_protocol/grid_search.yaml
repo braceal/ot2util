@@ -1,12 +1,13 @@
+robots:
+-
+  remote_dir: /root/test1
+  host: root@192.168.0.103 # root@192.168.0.102
+  port: 22
+  key_filename: /Users/abrace/.ssh/ot2_ssh_key
+
 output_dir: "search_results"
-remote_dir: /root/test1
 protocol: "protocol.py"
 run_simulation: false
-host: root@192.168.0.103 # root@192.168.0.102
-#key_filename: /User/apple/.ssh/id_rsa
-key_filename: /Users/abrace/.ssh/ot2_ssh_key
-# opentrons_path: /home/locobot/.local/bin
-opentrons_path: "/bin"
 volume_values:
 - 5
 - 10
