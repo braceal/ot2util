@@ -214,6 +214,10 @@ class ExperimentManager:
         return robot.run(experiment)
 
     def _run_local(self, experiment: Experiment) -> int:
+        # In the case of local runs, set the workdir to the output directory
+        experiment.cfg.workdir = experiment.output_dir
+        # Write a yaml protocol configuration to local
+        experiment.cfg.write_yaml(experiment.yaml)
         # The -d option corresponds to the opentrons custom-data-file argument
         # which passes the config file to the protocol.bundled_data field
         command = f"opentrons_simulate {experiment.protocol} -d {experiment.yaml}"
