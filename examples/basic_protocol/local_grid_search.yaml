@@ -1,6 +1,0 @@
-output_dir: search_results
-protocol: protocol.py
-run_simulation: true
-volume_values:
-- 5
-- 10
