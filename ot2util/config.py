@@ -114,7 +114,15 @@ def parse_args() -> argparse.Namespace:
 
     Returns
     -------
-        argparse.Namespace: Dict like object with parsed command line inputs.
+        argparse.Namespace:
+            Dict like object containing a path to a YAML file
+            accessed via the config property.
+
+    Example
+    -------
+    >>> from ot2util.config import parse_args
+    >>> args = parse_args()
+    >>> cfg = ExperimentConfig.from_yaml(args.config)
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(
