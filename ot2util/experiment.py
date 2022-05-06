@@ -1,3 +1,6 @@
+"""Encapsulation of experiments allowing specification of arbitrary protocols to be run on OT2.
+"""
+
 import time
 import subprocess
 from typing import Optional, Union, List
@@ -14,6 +17,12 @@ def _write_log(contents: Union[str, bytes], path: Path) -> None:
 
 
 class Experiment:
+    """Encapsulation of a singular experiment.
+
+    Contains information local to a singular protocol.
+    Will be executed by experiment manager
+    """
+
     def __init__(
         self,
         name: str,
@@ -32,6 +41,9 @@ class Experiment:
 
 
 class Opentrons:
+    """Modeling individual robot. Each robot is represented by
+    a connection to a specific robot."""
+
     def __init__(
         self,
         run_simulation: bool,
@@ -42,7 +54,7 @@ class Opentrons:
         opentrons_path: PathLike = Path("/bin"),
         tar_transfer: bool = False,
     ) -> None:
-        """Manage a set of experiments to be run in the same session.
+        """Initialize a new connection to an Opentrons.
 
         Parameters
         ----------
@@ -177,6 +189,21 @@ class Opentrons:
         return returncode
 
     def run(self, experiment: Experiment) -> int:
+        """Runs an experiment given specifications setup by the experiment object.
+
+        Experiment parameters should be set by the `ExperimentManager`
+
+        Parameters
+        ----------
+        experiment : Experiment
+            Configuration of the experiment. Specifies particulars
+            of the protocol to be run.
+
+        Returns
+        -------
+        int
+            Return code from process executing the protocol.
+        """
         self.running = True
         returncode = self._run_remote(experiment)
         self.running = False
@@ -184,7 +211,24 @@ class Opentrons:
 
 
 class ExperimentManager:
+    """Class to manage experiments to be run. Will handle distributing
+    protocols and running them on any/all OT2's available."""
+
     def __init__(self, run_simulation: bool, robots: List[OpentronsConfig]) -> None:
+        """Initialize the experiment manager with required environmental information
+
+        Parameters
+        ----------
+        run_simulation : bool
+            Whether or not to run a simulation or execute experiment
+        robots : List[OpentronsConfig]
+            List of OT2 robots available. If `run_simulation=True`, list should be non-empty.
+
+        Raises
+        ------
+        ValueError
+            If `robots` is empty, and `run_simulation=False`
+        """
 
         if not run_simulation and not robots:
             raise ValueError("robots must be specified if run_simulation is False")
@@ -227,6 +271,21 @@ class ExperimentManager:
         return proc.returncode
 
     def run(self, experiment: Experiment) -> int:
+        """Execute an experiment object.
+
+        Will execute an experiment according to the paramters of the experiment.
+        Can determine to run locally or on the OT2.
+
+        Parameters
+        ----------
+        experiment : Experiment
+            Protocol to be run. Contains necesary information to run trial.
+
+        Returns
+        -------
+        int
+            Return code of experiment. 0 is success, anything other than 0 is a failure
+        """
         if self.robots:
             return self._run_remote(experiment)
         return self._run_local(experiment)

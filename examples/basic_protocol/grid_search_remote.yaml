@@ -1,9 +1,9 @@
 robots:
 -
   remote_dir: /root/test1
-  host: root@192.168.0.103 # root@192.168.0.102
+  host: root@192.168.0.103 # root@192.168.0.102 # root@robotIP
   port: 22
-  key_filename: /Users/abrace/.ssh/ot2_ssh_key
+  key_filename: ~/.ssh/ot2_ssh_key # Path to your ssh key
 
 output_dir: search_results
 protocol: protocol.py
