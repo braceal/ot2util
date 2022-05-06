@@ -11,13 +11,14 @@ _T = TypeVar("_T")
 
 PathLike = Union[str, Path]
 
+
 class BaseSettings(_BaseSettings):
     """Allows any sub-class to inherit methods allowing for programatic description of protocols
 
-    Can load a yaml into a class and dump a class into a yaml file.
+    Can load a yaml into a class and write a class into a yaml file.
     """
 
-    def dump_yaml(self, cfg_path: PathLike) -> None:
+    def write_yaml(self, cfg_path: PathLike) -> None:
         """Allows programatic creation of ot2util objects and saving them into yaml.
 
         Parameters

@@ -19,7 +19,8 @@ def _write_log(contents: Union[str, bytes], path: Path) -> None:
 class Experiment:
     """Encapsulation of a singular experiment.
 
-    Contains information local to a singular protocol. Will be executed by experiment manager
+    Contains information local to a singular protocol.
+    Will be executed by experiment manager
     """
 
     def __init__(
@@ -40,8 +41,9 @@ class Experiment:
 
 
 class Opentrons:
-    """Modeling individual robot. Each robot is represented by a connection to a specific robot.
-    """
+    """Modeling individual robot. Each robot is represented by
+    a connection to a specific robot."""
+
     def __init__(
         self,
         run_simulation: bool,
@@ -194,7 +196,8 @@ class Opentrons:
         Parameters
         ----------
         experiment : Experiment
-            Configuration of the experiment. Specifies particulars of the protocol to be run.
+            Configuration of the experiment. Specifies particulars
+            of the protocol to be run.
 
         Returns
         -------
@@ -208,8 +211,9 @@ class Opentrons:
 
 
 class ExperimentManager:
-    """Class to manage experiments to be run. Will handle distributing protocols and running them on any/all OT2's available.
-    """
+    """Class to manage experiments to be run. Will handle distributing
+    protocols and running them on any/all OT2's available."""
+
     def __init__(self, run_simulation: bool, robots: List[OpentronsConfig]) -> None:
         """Initialize the experiment manager with required environmental information
 
