@@ -1,3 +1,6 @@
+"""Encapsulation of experiments allowing specification of arbitrary protocols to be run on OT2.
+"""
+
 import time
 import subprocess
 from typing import Optional, Union, List
@@ -37,8 +40,8 @@ class Experiment:
 
 
 class Opentrons:
-    """Manage a set of experiments to be run in the same session."""
-
+    """Modeling individual robot. Each robot is represented by a connection to a specific robot.
+    """
     def __init__(
         self,
         run_simulation: bool,
@@ -184,6 +187,20 @@ class Opentrons:
         return returncode
 
     def run(self, experiment: Experiment) -> int:
+        """Runs an experiment given specifications setup by the experiment object.
+
+        Experiment parameters should be set by the `ExperimentManager`
+
+        Parameters
+        ----------
+        experiment : Experiment
+            Configuration of the experiment. Specifies particulars of the protocol to be run.
+
+        Returns
+        -------
+        int
+            Return code from process executing the protocol.
+        """
         self.running = True
         returncode = self._run_remote(experiment)
         self.running = False
@@ -191,7 +208,23 @@ class Opentrons:
 
 
 class ExperimentManager:
+    """Class to manage experiments to be run. Will handle distributing protocols and running them on any/all OT2's available.
+    """
     def __init__(self, run_simulation: bool, robots: List[OpentronsConfig]) -> None:
+        """Initialize the experiment manager with required environmental information
+
+        Parameters
+        ----------
+        run_simulation : bool
+            Whether or not to run a simulation or execute experiment
+        robots : List[OpentronsConfig]
+            List of OT2 robots available. If `run_simulation=True`, list should be non-empty.
+
+        Raises
+        ------
+        ValueError
+            If `robots` is empty, and `run_simulation=False`
+        """
 
         if not run_simulation and not robots:
             raise ValueError("robots must be specified if run_simulation is False")

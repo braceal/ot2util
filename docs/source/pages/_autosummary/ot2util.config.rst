@@ -19,15 +19,6 @@ ot2util.config
 
    
    
-   .. rubric:: Classes
-
-   .. autosummary::
-   
-      BaseSettings
-      InstrumentConfig
-      LabwareConfig
-      ProtocolConfig
-   
    
 
    
