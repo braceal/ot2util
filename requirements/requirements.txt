@@ -2,4 +2,4 @@ opentrons
 pydantic
 pyyaml
 Fabric
-paramiko-ng
+paramiko==2.8
