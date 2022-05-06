@@ -13,7 +13,6 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('.'))
-import ot2util
 
 
 # -- Project information -----------------------------------------------------
@@ -34,15 +33,16 @@ release = '0.1a'
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
-    'sphinx.ext.autosummary'
+    'sphinx.ext.autosummary',
+    'sphinxcontrib.autodoc_pydantic'
 ]
 
-#Autosummary settings
+# Autosummary settings
 autosummary_generate = True  # Turn on sphinx.ext.autosummary
 
-#Autodoc settings 
-#Need to figure these out. See https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#confval-autodoc_default_options
-autodoc_default_options = { 
+# Autodoc settings
+# Need to figure these out. See https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#confval-autodoc_default_options
+autodoc_default_options = {
     'members': True,
     'undoc-members': True,
 }
