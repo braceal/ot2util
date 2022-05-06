@@ -15,8 +15,6 @@ class BaseSettings(_BaseSettings):
     """Allows any sub-class to inherit methods allowing for programatic description of protocols
 
     Can load a yaml into a class and dump a class into a yaml file.
-
-
     """
 
     def dump_yaml(self, cfg_path: PathLike) -> None:
@@ -91,6 +89,8 @@ class OpentronsConfig(BaseSettings):
 
 
 class ProtocolConfig(BaseSettings):
+    """Basic configuration for running a protocol."""
+
     # Path to write data to on the raspberry pi
     workdir: Path = Path("/root")
     """Workdir for the raspberry pi in the OT2"""
@@ -111,8 +111,9 @@ class ExperimentConfig(BaseSettings):
 def parse_args() -> argparse.Namespace:
     """Parses command line arguments using argparse library
 
-    Returns:
-        argparse.Namespace: dict like object with parsed command line inputs
+    Returns
+    -------
+        argparse.Namespace: Dict like object with parsed command line inputs.
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(

@@ -52,7 +52,7 @@ class Opentrons:
         opentrons_path: PathLike = Path("/bin"),
         tar_transfer: bool = False,
     ) -> None:
-        """Manage a set of experiments to be run in the same session.
+        """Initialize a new connection to an Opentrons.
 
         Parameters
         ----------
@@ -267,17 +267,20 @@ class ExperimentManager:
         return proc.returncode
 
     def run(self, experiment: Experiment) -> int:
-        """Determines where to run the experiment and executes the specific function.
+        """Execute an experiment object.
+
+        Will execute an experiment according to the paramters of the experiment.
+        Can determine to run locally or on the OT2.
 
         Parameters
         ----------
         experiment : Experiment
-            Experiment object describing the particulars of the individual experiment.
+            Protocol to be run. Contains necesary information to run trial.
 
         Returns
         -------
         int
-            Process return code of experiment/simulation.
+            Return code of experiment. 0 is success, anything other than 0 is a failure
         """
         if self.robots:
             return self._run_remote(experiment)
