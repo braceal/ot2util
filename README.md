@@ -60,3 +60,9 @@ git push
 ```
 Then open a pull request for a code review.
 
+If contributing to the core ot2util package, please add test cases
+mirroring the python module directory/file structure. Test file names
+should have the form `test_<module>.py`. Test cases can be run with:
+```
+pytest test -vs
+```
