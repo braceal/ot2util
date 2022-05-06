@@ -7,22 +7,16 @@ See search_results/ for a simulated output.
 """
 from pathlib import Path
 from typing import List
-from ot2util.config import BaseSettings, OpentronsConfig, parse_args
+from ot2util.config import ExperimentConfig, parse_args
 from ot2util.experiment import Experiment, ExperimentManager
 from protocol import SimpleProtocolConfig
 
 
-class GridSearchConfig(BaseSettings):
-    # Connect to one (or many) OT-2s
-    robots: List[OpentronsConfig] = []
-    # Directory to write experimental results to
-    output_dir: Path = ""
+class GridSearchConfig(ExperimentConfig):
     # Path to protocol script containing run function
     protocol: Path = ""
     # Base configuration options for the protocol
     base_config: Path = Path("config.yaml")
-    # Toggle simulation
-    run_simulation: bool = True
     # Volume values to grid search
     volume_values: List[int] = [50, 100]
 

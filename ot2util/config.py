@@ -2,7 +2,7 @@ import json
 import yaml
 import argparse
 from pathlib import Path
-from typing import Type, TypeVar, Union, Optional
+from typing import Type, TypeVar, Union, Optional, List
 from pydantic import BaseSettings as _BaseSettings
 
 _T = TypeVar("_T")
@@ -25,11 +25,6 @@ class BaseSettings(_BaseSettings):
     def from_bytes(cls: Type[_T], raw_bytes: bytes) -> _T:
         raw_data = yaml.safe_load(raw_bytes)
         return cls(**raw_data)  # type: ignore[call-arg]
-
-
-class ProtocolConfig(BaseSettings):
-    # Path to write data to on the raspberry pi
-    workdir: Path = Path("/root")
 
 
 class LabwareConfig(BaseSettings):
@@ -56,6 +51,20 @@ class OpentronsConfig(BaseSettings):
     opentrons_path: Path = Path("/bin")
     # Whether or not to tar files before transferring from remote to local
     tar_transfer: bool = False
+
+
+class ProtocolConfig(BaseSettings):
+    # Path to write data to on the raspberry pi
+    workdir: Path = Path("/root")
+
+
+class ExperimentConfig(BaseSettings):
+    # Connect to one (or many) OT-2s
+    robots: List[OpentronsConfig] = []
+    # Directory to write experimental results to
+    output_dir: Path = Path()
+    # Toggle simulation
+    run_simulation: bool = True
 
 
 def parse_args() -> argparse.Namespace:
