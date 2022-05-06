@@ -75,4 +75,4 @@ def run(protocol: protocol_api.ProtocolContext):
 
 if __name__ == "__main__":
     # Write an example yaml file with default settings
-    SimpleProtocolConfig().dump_yaml("config.yaml")
+    SimpleProtocolConfig().write_yaml("config.yaml")
