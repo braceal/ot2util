@@ -1,0 +1,14 @@
+robots:
+-
+  remote_dir: /root/test1
+  host: root@192.168.0.103 # root@192.168.0.102
+  port: 22
+  key_filename: /User/apple/.ssh/id_rsa
+
+output_dir: search_results
+protocol: protocol.py
+base_config: config.yaml
+run_simulation: false
+volume_values:
+- 5
+- 10
