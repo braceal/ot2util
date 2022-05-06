@@ -6,46 +6,45 @@ python grid_search_algorithm.py -c grid_search_[local/remote].yaml
 See search_results/ for a simulated output.
 """
 
-#ot2util imports 
-from ot2util.algorithm import Algorithm 
+from typing import List
+from pathlib import Path
+from ot2util.algorithm import Algorithm
 from ot2util.experiment import Experiment
-from ot2util.config import PathLike, parse_args
-
-#from user
+from ot2util.config import parse_args, ExperimentConfig
 from protocol import SimpleProtocolConfig
 
-class GridSearch(Algorithm): 
-    def __init__(self, config_path: PathLike) -> None:
-        #creates self.config, self.experiment_manager fields
-        super().__init__(config_path)
 
-        #number of unique protocols to run 
-        self.len = len(str(len(self.config.volume_values)))
-
-        #Make output folder. Not sure if this should be here or elsewhere
-        self.config.output_dir.mkdir(exist_ok=True)
+class GridSearchConfig(ExperimentConfig):
+    # Path to protocol script containing run function
+    protocol: Path = ""
+    # Base configuration options for the protocol
+    base_config: Path = Path("config.yaml")
+    # Volume values to grid search
+    volume_values: List[int] = [50, 100]
 
 
-    def __len__(self) -> int:
-        return  self.len
+class GridSearch(Algorithm):
+    def __init__(self, config: GridSearchConfig) -> None:
+        # Creates self.config, self.experiment_manager fields
+        super().__init__(config)
 
+        # Number of unique experiments to run
+        self.num_experiments = len(str(len(self.config.volume_values)))
 
-    def run(self, ) -> None: 
+    def run(self) -> None:
 
-        # Loop over specified volume values and update configuration
+        # Loop over specified volume values, update configuration, launch experiment
         for itr, volume in enumerate(self.config.volume_values):
-            #create protocol for individual experiment 
-            protocol_cfg = SimpleProtocolConfig.from_yaml("config.yaml")
-            
+            # Create a fresh protocol config for individual experiment
+            protocol_cfg = SimpleProtocolConfig.from_yaml(self.config.base_config)
+
             # Update search parameter
             protocol_cfg.volume = volume
 
             # Create new experiment
-            experiment_name = f"experiment-{itr:0{len(self)}d}"
-            if self.config.remote_dir is not None:
-                protocol_cfg.workdir = self.config.remote_dir / experiment_name
+            name = f"experiment-{itr:0{self.num_experiments}d}"
             experiment = Experiment(
-                experiment_name, self.config.output_dir, self.config.protocol, protocol_cfg
+                name, self.config.output_dir, self.config.protocol, protocol_cfg
             )
 
             # Run the experiment
@@ -55,14 +54,15 @@ class GridSearch(Algorithm):
                     f"Experiment {experiment.name} exited with returncode: {returncode}"
                 )
 
-def main(config_path):
-    gridsearch = GridSearch(config_path)
-    print('Running gridsearch')
+
+def main(cfg: GridSearchConfig):
+    gridsearch = GridSearch(cfg)
+    print("Running gridsearch")
     gridsearch.run()
-    print('Done running gridsearch')
-    
+    print("Done running gridsearch")
 
 
 if __name__ == "__main__":
-    args = parse_args() 
-    main(args.config)
+    args = parse_args()
+    cfg = GridSearchConfig.from_yaml(args.config)
+    main(cfg)
