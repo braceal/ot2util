@@ -185,6 +185,10 @@ class Opentrons:
 
 class ExperimentManager:
     def __init__(self, run_simulation: bool, robots: List[OpentronsConfig]) -> None:
+
+        if not run_simulation and not robots:
+            raise ValueError("robots must be specified if run_simulation is False")
+
         self.robots = [
             Opentrons(
                 run_simulation,
