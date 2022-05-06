@@ -31,9 +31,3 @@ class Algorithm:
     def run(self, *args: Any, **kwargs: Any) -> Optional[Any]:
         """User should implement this."""
         raise NotImplementedError
-
-
-if __name__ == "__main__":
-    cfg = ExperimentConfig()
-    abstract_algorithm = Algorithm(cfg)
-    print(abstract_algorithm)
