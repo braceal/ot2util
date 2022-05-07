@@ -37,7 +37,7 @@ class Camera:
         Parameters
         ----------
         destination_well : str
-            The coordinate string (e.g `'A1`) of the well we want to measure
+            The coordinate string (e.g :code:`"A1"`) of the well we want to measure
 
         Returns
         -------
