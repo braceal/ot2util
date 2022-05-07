@@ -5,7 +5,7 @@ import cv2
 import colorsys
 import cv2.aruco
 import numpy as np
-from typing import Tuple
+from typing import Tuple, List
 
 
 class Camera:
@@ -58,7 +58,7 @@ class Camera:
             diameter_x,
             diameter_y,
         ) = self._find_draw_fiducial(frame)
-        frame2, test_color, hsv_avg = self._get_color(
+        frame2, test_color, hsv = self._get_color(
             frame, center_br, center_origin, diameter_x, diameter_y, coordinate
         )
         rgb = (int(test_color[2]), int(test_color[1]), int(test_color[0]))
@@ -72,15 +72,19 @@ class Camera:
         # See commit https://github.com/braceal/ot2util/commit/b2346e42a3688917f94d27bd118d9d9dc1d45e8f
         # For details on what was happening. I have removed it for now
 
-        return rgb, hsv_avg
+        return rgb, hsv
 
     def _get_color(
         self, img, center_br, center_origin, diameter_x, diameter_y, coordinate
-    ):
-        H, S, V = [], [], []
+    ) -> Tuple[cv2.Mat, List[float], Tuple[float, float, float]]:
+        # TODO: It would be better to type alias Tuple[float, float, float]
+        #       as a Color (or the same with int's). And then return two color
+        #       types from this function. We would want to adjust the functions
+        #       that call this one as well.
+        h, s, v = [], [], []
         img = cv2.resize(img, (640, 480))
         # transform the colorspace to HSV
-        HSV = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
         # TODO: This block should be a helper function
         x, y = coordinate
@@ -100,14 +104,16 @@ class Camera:
         # Put HSV values in a list
         for i in range(int(start[0]), int(end[0])):
             for j in range(int(start[1]), int(end[1])):
-                H.append(HSV[j, i][0])
-                S.append(HSV[j, i][1])
-                V.append(HSV[j, i][2])
+                h.append(hsv[j, i][0])
+                s.append(hsv[j, i][1])
+                v.append(hsv[j, i][2])
 
-        H_avg, S_avg, V_avg = np.median(H), np.median(S), np.median(V)
-        test_color = colorsys.hsv_to_rgb(H_avg / 179, S_avg / 255, V_avg / 255)
-        color = [test_color[2] * 255, test_color[1] * 255, test_color[0] * 255]
-        return img, color, (H_avg, S_avg, V_avg)
+        h, s, v = np.median(h), np.median(s), np.median(v)
+        # TODO: Why is h divided by 179 instead of 255?
+        hsv = (h / 179, s / 255, v / 255)
+        r, g, b = colorsys.hsv_to_rgb(*hsv)
+        rgb = [b * 255, g * 255, r * 255]
+        return img, rgb, hsv
 
     def _find_draw_fiducial(self, img):
         # Made by hand. Should be calculated by calibration for better results

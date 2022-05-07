@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import List
 from ot2util.config import ExperimentConfig, parse_args
 from ot2util.experiment import Experiment, ExperimentManager
-import ot2util.camera as camera
+from ot2util.camera import Camera
 from protocol import SimpleProtocolConfig
 
 
@@ -37,7 +37,7 @@ def main(cfg: GridSearchConfig):
 
     # Initialize Camera
     if not cfg.run_simulation:
-        camera_obj = camera.Camera(cfg.camera_id)
+        camera = Camera(cfg.camera_id)
 
     # Count number of experiments to label directories
     num_experiments = len(str(len(cfg.volume_values)))
@@ -62,11 +62,11 @@ def main(cfg: GridSearchConfig):
             # Find destination wells and measure their color
             for destination_well in cfg.destination_wells:
 
-                RGB_value, HSV_value = camera_obj.measure_well_color(destination_well)
+                rgb, hsv = camera.measure_well_color(destination_well)
                 # TODO: How should we end up storing this information?
                 # And how do we make it accessible to an algorithm?
                 print(
-                    f"Experiment-{itr}: target_well: {destination_well} RGB_value: {RGB_value}, HSV_value: {HSV_value}"
+                    f"Experiment-{itr}: target_well: {destination_well} rgb: {rgb}, hsv: {hsv}"
                 )
 
 
