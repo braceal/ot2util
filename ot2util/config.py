@@ -109,12 +109,6 @@ class ExperimentConfig(BaseSettings):
     """Whether or not to run a simulation or an actual experiment"""
 
 
-class ExperimentResult(BaseSettings):
-    next_target_tip: str
-    next_target_well: str
-    cur_target_well: str
-
-
 def parse_args() -> argparse.Namespace:
     """Parses command line arguments using argparse library
 
