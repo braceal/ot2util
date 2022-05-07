@@ -9,12 +9,13 @@ from typing import Tuple
 
 
 class Camera:
-    """Encapsulates logic of finding coordinates of wells and measuring thier colors. 
+    """Encapsulates logic of finding coordinates of wells and measuring thier colors.
 
-    In the future this should be expanded to have other self monitoring features. 
+    In the future this should be expanded to have other self monitoring features.
     """
+
     def __init__(self, camera_id=2):
-        """Initializes camera object with correct settings for the camera on top of the OT2. 
+        """Initializes camera object with correct settings for the camera on top of the OT2.
 
         Parameters
         ----------
@@ -41,8 +42,8 @@ class Camera:
         Returns
         -------
         Tuple[Tuple, Tuple]
-            A tuple of tuples. First one is the RGB values as integers. Second tuple 
-            is HSV values as integers. 
+            A tuple of tuples. First one is the RGB values as integers. Second tuple
+            is HSV values as integers.
         """
         # Find target well
         coordinate = self._convert_coordinate(destination_well)
@@ -102,9 +103,9 @@ class Camera:
             cur_x = current[0]
         cur = np.array([cur_x, cur_y])
         dis = diameter_x[0] // 3
-        l = np.array([dis, dis])
-        start = (cur - l).astype(int)
-        end = (cur + l).astype(int)
+        l_offset = np.array([dis, dis])
+        start = (cur - l_offset).astype(int)
+        end = (cur + l_offset).astype(int)
         cv2.circle(img, cur, int(dis), (0, 255, 0), 1)
         # Put HSV values in a list
         for i in range(int(start[0]), int(end[0])):
