@@ -171,12 +171,8 @@ class Camera:
         cv2.line(img_markers, c_side[1], c_side[2], 100, 2)
         for cornerset in corners:
             cornerset = cornerset[0].astype(int)
-            # draw the markers
-            tl = cornerset[0]
-            tr = cornerset[1]
-            bl = cornerset[3]
-            br = cornerset[2]
-
+            # Draw the markers
+            tl, tr, bl, br = cornerset[0], cornerset[1], cornerset[3], cornerset[2]
             cv2.line(img_markers, tl, tr, 255, 1)
             cv2.line(img_markers, tr, br, 255, 1)
             cv2.line(img_markers, br, bl, 255, 1)
