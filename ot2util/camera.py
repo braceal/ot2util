@@ -1,11 +1,26 @@
+"""Allows for integration of camera into experiments.
+"""
+
 import cv2
 import colorsys
 import cv2.aruco
 import numpy as np
+from typing import Tuple
 
 
 class Camera:
+    """Encapsulates logic of finding coordinates of wells and measuring thier colors. 
+
+    In the future this should be expanded to have other self monitoring features. 
+    """
     def __init__(self, camera_id=2):
+        """Initializes camera object with correct settings for the camera on top of the OT2. 
+
+        Parameters
+        ----------
+        camera_id : int, optional
+            ID of the camera on top of the OT2, by default 2
+        """
         self.cap = cv2.VideoCapture(camera_id)
         self.cap.set(3, 1920)
         self.cap.set(4, 1280)
@@ -15,10 +30,51 @@ class Camera:
         self.cap.set(cv2.CAP_PROP_CONTRAST, 50)  # Set contrast -64 - 64  2.0
         self.cap.set(cv2.CAP_PROP_EXPOSURE, 156)  # Set exposure 1.0 - 5000  156.0
 
-    def bgr8_to_jpeg(self, value, quality=75):
+    def measure_well_color(self, destination_well: str) -> Tuple[Tuple, Tuple]:
+        """Measures the RGB values of the destination well. Gives RGB and HSV values
+
+        Parameters
+        ----------
+        destination_well : str
+            The coordinate string (e.g `'A1`) of the well we want to measure
+
+        Returns
+        -------
+        Tuple[Tuple, Tuple]
+            A tuple of tuples. First one is the RGB values as integers. Second tuple 
+            is HSV values as integers. 
+        """
+        # Find target well
+        coordinate = self._convert_coordinate(destination_well)
+
+        ret, frame = self.cap.read()
+        (
+            frame1,
+            center_br,
+            center_origin,
+            diameter_x,
+            diameter_y,
+        ) = self._find_draw_fiducial(frame)
+        frame2, test_color, hsv_avg = self._get_color(
+            frame, center_br, center_origin, diameter_x, diameter_y, coordinate
+        )
+        RGB_color = (int(test_color[2]), int(test_color[1]), int(test_color[0]))
+        text = f"RGB: {(int(test_color[2]), int(test_color[1]), int(test_color[0]))}"
+        frame2 = cv2.putText(
+            frame2, text, (210, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2
+        )
+        frame2 = cv2.rectangle(frame2, (100, 50), (200, 150), test_color, 10)
+
+        # Originally the frames were saved,
+        # See commit https://github.com/braceal/ot2util/commit/b2346e42a3688917f94d27bd118d9d9dc1d45e8f
+        # For details on what was happening. I have removed it for now
+
+        return RGB_color, hsv_avg
+
+    def _bgr8_to_jpeg(self, value, quality=75):
         return bytes(cv2.imencode(".jpg", value)[1])
 
-    def get_color(
+    def _get_color(
         self, img, center_br, center_origin, diameter_x, diameter_y, coordinate
     ):
         H = []
@@ -66,7 +122,7 @@ class Camera:
         #     print(test_color)
         return img, color, (H_avg, S_avg, V_avg)
 
-    def find_draw_fiducial(self, img):
+    def _find_draw_fiducial(self, img):
         # Made by hand. Should be calculated by calibration for better results
         if len(img.shape) == 3:
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -147,33 +203,7 @@ class Camera:
 
         return img_markers, center_br, center_origin, diameter_x, diameter_y
 
-    def color_recognize(self, workdir, coordinate=np.array([5, 5]), experiment_id=0):
-        ret, frame = self.cap.read()
-        (
-            frame1,
-            center_br,
-            center_origin,
-            diameter_x,
-            diameter_y,
-        ) = self.find_draw_fiducial(frame)
-        frame2, test_color, hsv_avg = self.get_color(
-            frame, center_br, center_origin, diameter_x, diameter_y, coordinate
-        )
-        RGB_color = (int(test_color[2]), int(test_color[1]), int(test_color[0]))
-        text = f"RGB: {(int(test_color[2]), int(test_color[1]), int(test_color[0]))}"
-        frame2 = cv2.putText(
-            frame2, text, (210, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2
-        )
-        frame2 = cv2.rectangle(frame2, (100, 50), (200, 150), test_color, 10)
-        cv2.imwrite(
-            str(workdir / f"exp{experiment_id}_color_recognize_frame1.png"), frame1
-        )
-        cv2.imwrite(
-            str(workdir / f"exp{experiment_id}_color_recognize_frame2.png"), frame2
-        )
-        return RGB_color, hsv_avg
-
-    def convert_coordinate(self, coordinate_org="A1"):
+    def _convert_coordinate(self, coordinate_org="A1"):
         x = ord("H") - ord(coordinate_org[0])
         y = int(coordinate_org[1:]) - 1
         return np.array([x, y])

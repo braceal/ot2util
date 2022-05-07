@@ -62,10 +62,7 @@ def main(cfg: GridSearchConfig):
             # Find destination wells and measure their color
             for destination_well in cfg.destination_wells:
 
-                coordinate = camera_obj.convert_coordinate(destination_well)
-                RGB_value, HSV_value = camera_obj.color_recognize(
-                    Path(cfg.output_dir) / name, coordinate, itr
-                )
+                RGB_value, HSV_value = camera_obj.measure_well_color(destination_well)
                 # TODO: How should we end up storing this information?
                 # And how do we make it accessible to an algorithm?
                 print(
