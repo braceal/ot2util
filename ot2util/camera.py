@@ -81,15 +81,15 @@ class Camera:
         img = cv2.resize(img, (640, 480))
         # transform the colorspace to HSV
         HSV = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-        i, j = coordinate[1], coordinate[0]
 
         # TODO: This block should be a helper function
-        current = center_origin + i * diameter_y + j * diameter_x
+        x, y = coordinate
+        current = center_origin + y * diameter_y + x * diameter_x
         current = current.astype(int)
-        from_bottom = center_br - (11 - i) * diameter_y - (7 - j) * diameter_x
+        from_bottom = center_br - (11 - y) * diameter_y - (7 - x) * diameter_x
         from_bottom = from_bottom.astype(int)
-        cur_y = from_bottom[1] if i > 6 else current[1]
-        cur_x = from_bottom[0] if j > 4 else current[0]
+        cur_y = from_bottom[1] if y > 6 else current[1]
+        cur_x = from_bottom[0] if x > 4 else current[0]
         cur = np.array([cur_x, cur_y])
 
         dis = diameter_x[0] // 3
@@ -151,14 +151,14 @@ class Camera:
 
         center_br = origin_br - (radius_x + radius_y) * 0.9
 
-        for i in range(0, 12):
-            for j in range(0, 8):
-                current = center_origin + i * diameter_y + j * diameter_x
+        for y in range(0, 12):
+            for x in range(0, 8):
+                current = center_origin + y * diameter_y + x * diameter_x
                 current = current.astype(int)
-                from_bottom = center_br - (11 - i) * diameter_y - (7 - j) * diameter_x
+                from_bottom = center_br - (11 - y) * diameter_y - (7 - x) * diameter_x
                 from_bottom = from_bottom.astype(int)
-                cur_y = from_bottom[1] if i > 6 else current[1]
-                cur_x = from_bottom[0] if j > 4 else current[0]
+                cur_y = from_bottom[1] if y > 6 else current[1]
+                cur_x = from_bottom[0] if x > 4 else current[0]
                 cur = (cur_x, cur_y)
                 cv2.circle(img_markers, cur, 1, (0, 255, 0), 1)
 
@@ -178,7 +178,7 @@ class Camera:
 
         return img_markers, center_br, center_origin, diameter_x, diameter_y
 
-    def _convert_coordinate(self, coordinate_org: str = "A1"):
+    def _convert_coordinate(self, coordinate_org: str = "A1") -> Tuple[int, int]:
         x = ord("H") - ord(coordinate_org[0])
         y = int(coordinate_org[1:]) - 1
-        return np.array([x, y])
+        return x, y
