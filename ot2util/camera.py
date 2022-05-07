@@ -5,7 +5,10 @@ import cv2
 import colorsys
 import cv2.aruco
 import numpy as np
-from typing import Tuple, List
+from typing import Tuple
+
+ColorRGB = Tuple[int, int, int]
+ColorHSV = Tuple[float, float, float]
 
 
 class Camera:
@@ -31,9 +34,7 @@ class Camera:
         self.cap.set(cv2.CAP_PROP_CONTRAST, 50)  # Set contrast -64 - 64  2.0
         self.cap.set(cv2.CAP_PROP_EXPOSURE, 156)  # Set exposure 1.0 - 5000  156.0
 
-    def measure_well_color(
-        self, destination_well: str
-    ) -> Tuple[Tuple[int, int, int], Tuple[int, int, int]]:
+    def measure_well_color(self, destination_well: str) -> Tuple[ColorRGB, ColorHSV]:
         """Measures the RGB values of the destination well. Gives RGB and HSV values
 
         Parameters
@@ -43,7 +44,7 @@ class Camera:
 
         Returns
         -------
-        Tuple[Tuple[int, int, int], Tuple[int, int, int]]
+        Tuple[ColorRGB, ColorHSV]
             A tuple of tuples. First one is the RGB values as integers. Second tuple
             is HSV values as integers.
         """
@@ -58,29 +59,25 @@ class Camera:
             diameter_x,
             diameter_y,
         ) = self._find_draw_fiducial(frame)
-        frame2, test_color, hsv = self._get_color(
+        frame2, rgb, hsv = self._get_color(
             frame, center_br, center_origin, diameter_x, diameter_y, coordinate
         )
-        rgb = (int(test_color[2]), int(test_color[1]), int(test_color[0]))
         text = f"RGB: {rgb}"
         frame2 = cv2.putText(
             frame2, text, (210, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2
         )
-        frame2 = cv2.rectangle(frame2, (100, 50), (200, 150), test_color, 10)
+        frame2 = cv2.rectangle(frame2, (100, 50), (200, 150), rgb, 10)
 
-        # Originally the frames were saved,
+        # TODO: Originally the frames were saved,
         # See commit https://github.com/braceal/ot2util/commit/b2346e42a3688917f94d27bd118d9d9dc1d45e8f
         # For details on what was happening. I have removed it for now
+        # Can we get rid of the frame logic now? Is it good for logging?
 
         return rgb, hsv
 
     def _get_color(
-        self, img, center_br, center_origin, diameter_x, diameter_y, coordinate
-    ) -> Tuple[cv2.Mat, List[float], Tuple[float, float, float]]:
-        # TODO: It would be better to type alias Tuple[float, float, float]
-        #       as a Color (or the same with int's). And then return two color
-        #       types from this function. We would want to adjust the functions
-        #       that call this one as well.
+        self, img: cv2.Mat, center_br, center_origin, diameter_x, diameter_y, coordinate
+    ) -> Tuple[cv2.Mat, ColorRGB, ColorHSV]:
         h, s, v = [], [], []
         img = cv2.resize(img, (640, 480))
         # transform the colorspace to HSV
@@ -112,10 +109,10 @@ class Camera:
         # TODO: Why is h divided by 179 instead of 255?
         hsv = (h / 179, s / 255, v / 255)
         r, g, b = colorsys.hsv_to_rgb(*hsv)
-        rgb = [b * 255, g * 255, r * 255]
+        rgb = (int(g * 255), int(r * 255), int(b * 255))
         return img, rgb, hsv
 
-    def _find_draw_fiducial(self, img):
+    def _find_draw_fiducial(self, img: cv2.Mat):
         # Made by hand. Should be calculated by calibration for better results
         if len(img.shape) == 3:
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
