@@ -104,9 +104,7 @@ class Camera:
                 S.append(HSV[j, i][1])
                 V.append(HSV[j, i][2])
 
-        H_avg = np.median(H)
-        S_avg = np.median(S)
-        V_avg = np.median(V)
+        H_avg, S_avg, V_avg = np.median(H), np.median(S), np.median(V)
         test_color = colorsys.hsv_to_rgb(H_avg / 179, S_avg / 255, V_avg / 255)
         color = [test_color[2] * 255, test_color[1] * 255, test_color[0] * 255]
         return img, color, (H_avg, S_avg, V_avg)
