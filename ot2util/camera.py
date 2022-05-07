@@ -14,7 +14,7 @@ class Camera:
     In the future this should be expanded to have other self monitoring features.
     """
 
-    def __init__(self, camera_id=2):
+    def __init__(self, camera_id: int = 2) -> None:
         """Initializes camera object with correct settings for the camera on top of the OT2.
 
         Parameters
@@ -31,7 +31,9 @@ class Camera:
         self.cap.set(cv2.CAP_PROP_CONTRAST, 50)  # Set contrast -64 - 64  2.0
         self.cap.set(cv2.CAP_PROP_EXPOSURE, 156)  # Set exposure 1.0 - 5000  156.0
 
-    def measure_well_color(self, destination_well: str) -> Tuple[Tuple, Tuple]:
+    def measure_well_color(
+        self, destination_well: str
+    ) -> Tuple[Tuple[int, int, int], Tuple[int, int, int]]:
         """Measures the RGB values of the destination well. Gives RGB and HSV values
 
         Parameters
@@ -41,7 +43,7 @@ class Camera:
 
         Returns
         -------
-        Tuple[Tuple, Tuple]
+        Tuple[Tuple[int, int, int], Tuple[int, int, int]]
             A tuple of tuples. First one is the RGB values as integers. Second tuple
             is HSV values as integers.
         """
@@ -59,8 +61,8 @@ class Camera:
         frame2, test_color, hsv_avg = self._get_color(
             frame, center_br, center_origin, diameter_x, diameter_y, coordinate
         )
-        RGB_color = (int(test_color[2]), int(test_color[1]), int(test_color[0]))
-        text = f"RGB: {(int(test_color[2]), int(test_color[1]), int(test_color[0]))}"
+        rgb = (int(test_color[2]), int(test_color[1]), int(test_color[0]))
+        text = f"RGB: {rgb}"
         frame2 = cv2.putText(
             frame2, text, (210, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2
         )
@@ -70,38 +72,26 @@ class Camera:
         # See commit https://github.com/braceal/ot2util/commit/b2346e42a3688917f94d27bd118d9d9dc1d45e8f
         # For details on what was happening. I have removed it for now
 
-        return RGB_color, hsv_avg
-
-    def _bgr8_to_jpeg(self, value, quality=75):
-        return bytes(cv2.imencode(".jpg", value)[1])
+        return rgb, hsv_avg
 
     def _get_color(
         self, img, center_br, center_origin, diameter_x, diameter_y, coordinate
     ):
-        H = []
-        S = []
-        V = []
-        img = cv2.resize(
-            img,
-            (640, 480),
-        )
+        H, S, V = [], [], []
+        img = cv2.resize(img, (640, 480))
         # transform the colorspace to HSV
         HSV = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-        i = coordinate[1]
-        j = coordinate[0]
+        i, j = coordinate[1], coordinate[0]
+
+        # TODO: This block should be a helper function
         current = center_origin + i * diameter_y + j * diameter_x
         current = current.astype(int)
         from_bottom = center_br - (11 - i) * diameter_y - (7 - j) * diameter_x
         from_bottom = from_bottom.astype(int)
-        if i > 6:
-            cur_y = from_bottom[1]
-        else:
-            cur_y = current[1]
-        if j > 4:
-            cur_x = from_bottom[0]
-        else:
-            cur_x = current[0]
+        cur_y = from_bottom[1] if i > 6 else current[1]
+        cur_x = from_bottom[0] if j > 4 else current[0]
         cur = np.array([cur_x, cur_y])
+
         dis = diameter_x[0] // 3
         l_offset = np.array([dis, dis])
         start = (cur - l_offset).astype(int)
@@ -119,8 +109,6 @@ class Camera:
         V_avg = np.median(V)
         test_color = colorsys.hsv_to_rgb(H_avg / 179, S_avg / 255, V_avg / 255)
         color = [test_color[2] * 255, test_color[1] * 255, test_color[0] * 255]
-        #     print("HSV: ", (H_avg, S_avg, V_avg))
-        #     print(test_color)
         return img, color, (H_avg, S_avg, V_avg)
 
     def _find_draw_fiducial(self, img):
@@ -137,9 +125,8 @@ class Camera:
         )
         img_markers = img.copy()
 
-        if (
-            len(corners) == 4
-        ):  # For now we use 4 markers to find the locations for plate 1
+        # For now we use 4 markers to find the locations for plate 1
+        if len(corners) == 4:
             c2 = corners[2][0]
             c1 = corners[0][0]
             c_side = corners[3][0]
@@ -159,9 +146,6 @@ class Camera:
             origin_br = (c_side[1][0], c1[1][1]) + np.array([4, -2])
             cv2.circle(img_markers, origin_br, 1, (0, 255, 0), 1)
 
-            #         print("diameter x y: ", diameter_x, diameter_y)
-            #         print("well radius x y:", radius_x, radius_y)
-
             center_origin = origin + (radius_x + radius_y) * 0.9
             center_origin = center_origin.astype(int)
 
@@ -175,19 +159,13 @@ class Camera:
                         center_br - (11 - i) * diameter_y - (7 - j) * diameter_x
                     )
                     from_bottom = from_bottom.astype(int)
-                    if i > 6:
-                        cur_y = from_bottom[1]
-                    else:
-                        cur_y = current[1]
-                    if j > 4:
-                        cur_x = from_bottom[0]
-                    else:
-                        cur_x = current[0]
+                    cur_y = from_bottom[1] if i > 6 else current[1]
+                    cur_x = from_bottom[0] if j > 4 else current[0]
                     cur = (cur_x, cur_y)
                     cv2.circle(img_markers, cur, 1, (0, 255, 0), 1)
 
             cv2.line(img_markers, c_side[1], c_side[2], 100, 2)
-            for index, cornerset in enumerate(corners):
+            for cornerset in corners:
                 cornerset = cornerset[0].astype(int)
                 # draw the markers
                 tl = cornerset[0]
@@ -204,7 +182,7 @@ class Camera:
 
         return img_markers, center_br, center_origin, diameter_x, diameter_y
 
-    def _convert_coordinate(self, coordinate_org="A1"):
+    def _convert_coordinate(self, coordinate_org: str = "A1"):
         x = ord("H") - ord(coordinate_org[0])
         y = int(coordinate_org[1:]) - 1
         return np.array([x, y])
