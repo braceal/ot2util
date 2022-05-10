@@ -130,12 +130,9 @@ class Camera:
         if len(corners) != 4:
             raise ValueError("No markers found")
 
-        c2 = corners[2][0]
-        c1 = corners[0][0]
-        c_side = corners[3][0]
-        c1 = c1.astype(int)
-        c2 = c2.astype(int)
-        c_side = c_side.astype(int)
+        c2 = corners[2][0].astype(int)
+        c1 = corners[0][0].astype(int)
+        c_side = corners[3][0].astype(int)
 
         diameter_x = (c_side[1] - c_side[2]) / 8
         radius_x = diameter_x / 2
