@@ -73,7 +73,8 @@ def main(cfg: GridSearchConfig):
 
     for itr, volume_list in enumerate(cfg.volume_values):
         # Update search parameter
-        protocol_cfg.source_volumes = list(volume_list)
+        # protocol_cfg.source_volumes = list(volume_list)
+        print(itr, volume_list)
 
 
 if __name__ == "__main__":
