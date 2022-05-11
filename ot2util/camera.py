@@ -52,7 +52,7 @@ class Camera:
         -------
         Tuple[ColorRGB, ColorHSV]
             A tuple of tuples. First one is the RGB values as integers. Second tuple
-            is HSV values as integers.
+            is HSV float values.
         """
         # Find target well
         coordinate = self._convert_coordinate(destination_well)
