@@ -2,7 +2,8 @@
 # Created by https://www.toptal.com/developers/gitignore/api/sublimetext,pycharm,visualstudiocode,macos,python,jupyternotebooks
 # Edit at https://www.toptal.com/developers/gitignore?templates=sublimetext,pycharm,visualstudiocode,macos,python,jupyternotebooks
 
-examples/basic_protocol/search_results/
+examples/*/search_results/
+
 
 # Common virtual environment names
 ot2/
@@ -347,7 +348,7 @@ bh_unicode_properties.cache
 GitHub.sublime-settings
 
 ### VisualStudioCode ###
-.vscode/*
+.vscode/
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json

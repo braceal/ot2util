@@ -1,0 +1,17 @@
+robots:
+- remote_dir: /root/test1
+  host: root@192.168.0.101
+  port: 22
+  key_filename: /Users/abrace/.ssh/ot2_ssh_key
+- remote_dir: /root/test1
+  host: root@192.168.0.103
+  port: 22
+  key_filename: /Users/abrace/.ssh/ot2_ssh_key
+output_dir: search_results
+protocol: protocol.py
+base_config: config.yaml
+run_simulation: false
+volume_values:
+- 5
+- 10
+- 8
