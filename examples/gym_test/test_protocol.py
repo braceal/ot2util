@@ -1,7 +1,11 @@
 """This protocol implements the color mixing gym."""
-from typing import List
-from opentrons.protocol_api import ProtocolContext
-from ot2util.config import ProtocolConfig, LabwareConfig, InstrumentConfig
+from typing import List  # noqa
+from opentrons.protocol_api import ProtocolContext  # noqa
+from ot2util.config import (  # noqa
+    ProtocolConfig,
+    LabwareConfig,
+    InstrumentConfig,
+)
 
 
 metadata = {
@@ -10,6 +14,7 @@ metadata = {
     "description": "Simple protocol to get started using OT2",
     "apiLevel": "2.12",
 }
+
 
 class ColorMixingProtocolConfig(ProtocolConfig):
     # File must be named config
@@ -38,6 +43,7 @@ def next_location(cur_location: str) -> str:
         return ""
     return letter + number
 
+
 def run(protocol: ProtocolContext) -> None:
 
     # Load the protocol configuration
@@ -46,9 +52,7 @@ def run(protocol: ProtocolContext) -> None:
     # labware
     wellplate = protocol.load_labware(cfg.wellplate.name, cfg.wellplate.location)
     tiprack = protocol.load_labware(cfg.tiprack.name, cfg.tiprack.location)
-    sourceplate = protocol.load_labware(
-        cfg.sourceplate.name, cfg.sourceplate.location
-    )
+    sourceplate = protocol.load_labware(cfg.sourceplate.name, cfg.sourceplate.location)
     # pipettes
     pipette = protocol.load_instrument(
         cfg.pipette.name, cfg.pipette.mount, tip_racks=[tiprack]
@@ -62,4 +66,3 @@ def run(protocol: ProtocolContext) -> None:
         pipette.aspirate(src_volume, sourceplate[src_well])
         pipette.dispense(src_volume, wellplate[cfg.target_well])
         pipette.drop_tip()
-

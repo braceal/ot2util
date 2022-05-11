@@ -1,11 +1,12 @@
-from typing import List, Set, Dict
+from typing import List, Set, Dict, Union
 from opentrons.protocol_api import ProtocolContext
 from ot2util.config import (
     ProtocolConfig,
     LabwareConfig,
     InstrumentConfig,
-    write_template,
+    MetaDataConfig,
 )
+from ot2util.gym import Gym
 
 
 class ColorMixingProtocolConfig(ProtocolConfig):
@@ -93,25 +94,15 @@ class Robot:
         )
 
 
-class ColorMixingGym:
-    def __init__(self, metadata: Dict[str, str]):
+class ColorMixingGym(Gym):
+    config_class = ColorMixingProtocolConfig
+
+    def __init__(self, metadata: Union[MetaDataConfig, Dict[str, str]]):
+        super().__init__(metadata)
         # Define envirnomental parameters
         self.camera = None
         self.robot = Robot()
-        # TODO: Pass metadata to the templating function
-        self.metadata = metadata
         # self.protopiler = Protopiler()
-
-    def generate_template(self) -> None:
-        write_template(
-            "test_protocol.py",
-            imports=self.imports,
-            config=ColorMixingProtocolConfig,
-            run_func=self.run,
-            metadata=self.metadata,  # TODO: Switch to MetaDataConfig
-            funcs=[next_location],  # TODO: Remove this func, just here to testing
-            template_file="protocol.j2",
-        )
 
     def action(self, c1: str, c2: str, c3: str, v1: int, v2: int, v3: int):
         # TODO: Color is probably a data type with name and location (Namedtuple).
@@ -119,7 +110,6 @@ class ColorMixingGym:
         target_well: str = self.robot.wellplate.get_open_well()
         target_tips: List[str] = self.robot.get_tips(n=3)
 
-        # TODO: implement get_tip_row for high throughput
         # TODO: Combine LabwareConfig/Wellplate with pydantic dataclasses (needs refactor)
         config = ColorMixingProtocolConfig(
             source_wells=[c1, c2, c3],
@@ -135,28 +125,27 @@ class ColorMixingGym:
         )
         # TODO: Generate template protocol and submit config to job
         print(config)
-
-    def run_(config: ColorMixingProtocolConfig):
-        # TODO: Can expose interface to write your run function here which
-        #       will generate a protocol script from a template.
-        # TODO: Could pass metadata through the Gym constructor
-        # TODO: As an alternatively to implementing the run function
-        #       you can use the protopiler interface to implement the
-        #       run function.
-        pass
-        # This is what we currently do
-        # 1. write config yaml
-        # 2. send config and protocol to OT2 (assumes protocol is written)
-        # Instead see above
-
-        # self.protopiler.compile(cfg)
+        # TODO: Maybe it's a good idea to submit action to a thread pool
+        #       so we can block the thread until the protocol is finished
+        #       and then have it run the camera command all in the same thread.
+        #       if we go this route, some of the functions like get_open_well()
+        #       and get_tips() need to be thread safe (though perhaps if each robot
+        #       has it's own labware then this is not necessary since a robot can
+        #       only accept one job at a time).
 
     def imports(self) -> None:
         """This protocol implements the color mixing gym."""
-        from typing import List
-        from opentrons.protocol_api import ProtocolContext
-        from ot2util.config import ProtocolConfig, LabwareConfig, InstrumentConfig
+        from typing import List  # noqa
+        from opentrons.protocol_api import ProtocolContext  # noqa
+        from ot2util.config import (  # noqa
+            ProtocolConfig,
+            LabwareConfig,
+            InstrumentConfig,
+        )
 
+    # TODO: As an alternative to implementing the run function
+    #       you can use the protopiler interface to implement the
+    #       run function.
     # TODO: Could consider using the template to auto input the parameters so
     #       we don't need to send or parse the configuration yaml
     def run(protocol: ProtocolContext) -> None:
@@ -197,4 +186,4 @@ metadata = {
 
 if __name__ == "__main__":
     gym = ColorMixingGym(metadata=metadata)
-    gym.generate_template()
+    gym.generate_template("test_protocol.py", funcs=[next_location])
