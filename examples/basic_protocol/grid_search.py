@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import List
 from ot2util.config import ExperimentConfig, parse_args
 from ot2util.experiment import Experiment, ExperimentManager
+from ot2util.camera import Camera
 from protocol import SimpleProtocolConfig
 
 
@@ -19,6 +20,8 @@ class GridSearchConfig(ExperimentConfig):
     base_config: Path = Path("config.yaml")
     # Volume values to grid search
     volume_values: List[int] = [50, 100]
+    # Camera ID
+    camera_id: int = 2
 
 
 def main(cfg: GridSearchConfig):
@@ -32,13 +35,16 @@ def main(cfg: GridSearchConfig):
     # Create experiment manager to launch experiments
     experiment_manager = ExperimentManager(cfg.run_simulation, cfg.robots)
 
+    # Initialize Camera
+    if not cfg.run_simulation:
+        camera = Camera(cfg.camera_id)
+
     # Count number of experiments to label directories
     num_experiments = len(str(len(cfg.volume_values)))
 
-    # Loop over specified volume values and update configuration
-    for itr, volume in enumerate(cfg.volume_values):
+    for itr, volume_list in enumerate(cfg.volume_values):
         # Update search parameter
-        protocol_cfg.volume = volume
+        protocol_cfg.source_volumes = list(volume_list)
 
         # Create new experiment
         name = f"experiment-{itr:0{num_experiments}d}"
@@ -50,6 +56,18 @@ def main(cfg: GridSearchConfig):
             raise ValueError(
                 f"Experiment {experiment.name} exited with returncode: {returncode}"
             )
+
+        # After running the experiment, read the experiment result file
+        if not cfg.run_simulation:
+            # Find destination wells and measure their color
+            for destination_well in cfg.destination_wells:
+
+                rgb, hsv = camera.measure_well_color(destination_well)
+                # TODO: How should we end up storing this information?
+                # And how do we make it accessible to an algorithm?
+                print(
+                    f"Experiment-{itr}: target_well: {destination_well} rgb: {rgb}, hsv: {hsv}"
+                )
 
 
 if __name__ == "__main__":

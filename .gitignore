@@ -8,7 +8,6 @@ examples/*/search_results/
 # Common virtual environment names
 ot2/
 conda-env/
-examples/basic_protocol/search_results/
 
 
 ### JupyterNotebooks ###

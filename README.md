@@ -73,3 +73,28 @@ To make the documentation with readthedocs:
 cd docs/
 make html
 ```
+
+## FAQ
+
+1. If you recieve an error that looks as follows
+```
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!
+Someone could be eavesdropping on you right now (man-in-the-middle attack)!
+It is also possible that a host key has just been changed.
+The fingerprint for the ECDSA key sent by the remote host is
+Please contact your system administrator.
+Add correct host key in /Users/abrace/.ssh/known_hosts to get rid of this message.
+Offending ECDSA key in /Users/abrace/.ssh/known_hosts:46
+Host key for 192.168.0.103 has changed and you have requested strict checking.
+Host key verification failed.
+```
+Then you can fix it by removing your known_hosts file
+```
+rm /Users/abrace/.ssh/known_hosts
+```
+
+2. If the specific OT2 is not in your known hosts file (locally) then fabric will 
+block until you type yes which can throw off the execution when were working with threads.

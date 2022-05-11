@@ -1,5 +1,4 @@
-"""Settings for specific configurations of OT2 machines and experiments.
-"""
+"""Settings for specific configurations of OT2 machines and experiments."""
 import json
 import yaml
 import argparse
