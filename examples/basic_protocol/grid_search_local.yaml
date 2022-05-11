@@ -1,6 +1,6 @@
 output_dir: search_results # This folder will be created in the current directory
 protocol: protocol.py # This is a protocol file you write
 run_simulation: true
-volume_values: # These values will be accessible in your algorithm
+volume_values: # These values will be accessible in your agent
 - 5
 - 10

@@ -1,14 +1,14 @@
 """Run a grid search to test different volume values.
 
 To run it, update the grid_search_[local/remote].yaml configuration file and run:
-python grid_search_algorithm.py -c grid_search_[local/remote].yaml
+python grid_search_agent.py -c grid_search_[local/remote].yaml
 
 See search_results/ for a simulated output.
 """
 
 from typing import List
 from pathlib import Path
-from ot2util.algorithm import Algorithm
+from ot2util.agent import Agent
 from ot2util.experiment import Experiment
 from ot2util.config import parse_args, ExperimentConfig
 from protocol import SimpleProtocolConfig
@@ -23,7 +23,7 @@ class GridSearchConfig(ExperimentConfig):
     volume_values: List[int] = [50, 100]
 
 
-class GridSearch(Algorithm):
+class GridSearch(Agent):
     def __init__(self, config: GridSearchConfig) -> None:
         # Creates self.config, self.experiment_manager fields
         super().__init__(config)

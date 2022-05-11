@@ -1,10 +1,10 @@
 How to write YAML
 ================= 
 
-Writing an Algorithm YAML
+Writing an Agent YAML
 ################################
 
-Running a Simulation Algorithm
+Running a Simulation Agent
 ******************************
 
 Things needed: 
@@ -19,10 +19,10 @@ An example of a local grid search simulation is shown below.
     :linenos:
     :language: yaml
 
-Other values, such as :code:`volume_values` above, will be available for you to use in your algorithm, but are not 
+Other values, such as :code:`volume_values` above, will be available for you to use in your agent, but are not 
 required by the ot2util package. You can include any valid yaml here and it will be accessible in your aglorithm. 
 
-Running an Algorithm on OT2
+Running an Agent on OT2
 *****************************
 
 Things Needed: 
@@ -31,7 +31,7 @@ Things Needed:
     * A protocol file and accompanying configuration to run (part of :py:class:`Experiment<ot2util.config.ExperimentConfig>`)
     * Flag to run the sumulation :code:`run_simulation: False` (part of :py:class:`Experiment<ot2util.config.ExperimentConfig>`)
 
-Other values, such as :code:`volume_values` above, will be available for you to use in your algorithm, but are not 
+Other values, such as :code:`volume_values` above, will be available for you to use in your agent, but are not 
 required by the ot2util package. You can include any valid yaml here and it will be accessible in your aglorithm. 
 
 .. literalinclude:: ../../../../examples/basic_protocol/grid_search_remote.yaml
@@ -43,7 +43,7 @@ required by the ot2util package. You can include any valid yaml here and it will
 Writing a Protocol YAML
 ########################
 
-Protocol YAMLs are what acompany individual protocols (algorithms run many protocols, protocols are the instructions of the experiment.)
+Protocol YAMLs are what acompany individual protocols (agents run many protocols, protocols are the instructions of the experiment.)
 Protocols include information regarding the setup of the OT2, and which items to move where and so on. 
 
 Things that are needed:

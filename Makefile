@@ -15,6 +15,7 @@ lint:
 mypy:
 	mypy --config-file setup.cfg --package ot2util
 	mypy --config-file setup.cfg ot2util/
+	mypy --config-file setup.cfg examples/
 
 .PHONY: all
 all: format lint mypy
