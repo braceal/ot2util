@@ -17,6 +17,12 @@ class Camera:
     In the future this should be expanded to have other self monitoring features.
     """
 
+    @staticmethod
+    def _convert_coordinate(well: str = "A1") -> Tuple[int, int]:
+        x = ord("H") - ord(well[0])
+        y = int(well[1:]) - 1
+        return x, y
+
     def __init__(self, camera_id: int = 2) -> None:
         """Initializes camera object with correct settings for the camera on top of the OT2.
 
@@ -173,8 +179,3 @@ class Camera:
             cv2.line(img_markers, bl, tl, 255, 1)
 
         return img_markers, center_br, center_origin, diameter_x, diameter_y
-
-    def _convert_coordinate(self, coordinate_org: str = "A1") -> Tuple[int, int]:
-        x = ord("H") - ord(coordinate_org[0])
-        y = int(coordinate_org[1:]) - 1
-        return x, y
