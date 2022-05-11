@@ -12,7 +12,6 @@ from ot2util.algorithm import Algorithm
 from ot2util.experiment import Experiment
 from ot2util.config import parse_args, ExperimentConfig
 from protocol import SimpleProtocolConfig
-from concurrent.futures import ThreadPoolExecutor
 
 
 class GridSearchConfig(ExperimentConfig):
@@ -31,21 +30,6 @@ class GridSearch(Algorithm):
 
         # Number of unique experiments to run
         self.num_experiments = len(str(len(self.config.volume_values)))
-
-        self.pool = ThreadPoolExecutor(max_workers=len(self.config.robots) + 1)
-
-    def submit(self, experiment: Experiment) -> int:
-        fut = self.pool.submit(self._submit, experiment)
-        return fut
-
-    def _submit(self, experiment: Experiment) -> int:
-        # Run the experiment
-        returncode = self.experiment_manager.run(experiment)
-        if returncode != 0:
-            raise ValueError(
-                f"Experiment {experiment.name} exited with returncode: {returncode}"
-            )
-        return returncode
 
     def run(self) -> None:
 
