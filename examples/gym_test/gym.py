@@ -149,6 +149,11 @@ class ColorMixingGym(Gym):
     #       run function.
     # TODO: Could consider using the template to auto input the parameters so
     #       we don't need to send or parse the configuration yaml
+    # TODO: Perhaps the run function, submit, etc should belong to individual
+    #       robots. That way you can make a robot class and the gym can call
+    #       the appropriate functions to implement the action. This would make
+    #       more sense in the case where robots run different protocols that have
+    #       dependencies on another protocol finshing.
     def run(protocol: ProtocolContext) -> None:
 
         # Load the protocol configuration
