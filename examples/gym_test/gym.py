@@ -75,6 +75,7 @@ class Tiprack:
 
 class Robot:
     def __init__(self):
+        # TODO: Think about this interface more
         self.labware = None
         self.instruments = None
         # Reserve 3 wells for the primary colors to mix
@@ -186,4 +187,5 @@ metadata = {
 
 if __name__ == "__main__":
     gym = ColorMixingGym(metadata=metadata)
+    # TODO: Next location is not needed, just present for testing purposes
     gym.generate_template("test_protocol.py", funcs=[next_location])
