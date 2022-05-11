@@ -95,3 +95,6 @@ Then you can fix it by removing your known_hosts file
 ```
 rm /Users/abrace/.ssh/known_hosts
 ```
+
+2. If the specific OT2 is not in your known hosts file (locally) then fabric will 
+block until you type yes which can throw off the execution when were working with threads.
