@@ -1,7 +1,11 @@
-import inspect
-from typing import List, Set, Dict, Callable, Any
+from typing import List, Set, Dict
 from opentrons.protocol_api import ProtocolContext
-from ot2util.config import ProtocolConfig, LabwareConfig, InstrumentConfig
+from ot2util.config import (
+    ProtocolConfig,
+    LabwareConfig,
+    InstrumentConfig,
+    write_template,
+)
 
 
 class ColorMixingProtocolConfig(ProtocolConfig):
@@ -89,14 +93,6 @@ class Robot:
         )
 
 
-metadata = {
-    "protocolName": "My Protocol",
-    "author": "Name <email@address.com>",
-    "description": "Simple protocol to get started using OT2",
-    "apiLevel": "2.12",
-}
-
-
 class ColorMixingGym:
     def __init__(self, metadata: Dict[str, str]):
         # Define envirnomental parameters
@@ -106,19 +102,16 @@ class ColorMixingGym:
         self.metadata = metadata
         # self.protopiler = Protopiler()
 
-    # TODO: These functions should be part of templating code
-    def _getsource(self, func: Callable[..., Any]) -> str:
-        code = inspect.getsource(func)
-        lines = code.split("\n")
-        indent = len(lines[0]) - len(lines[0].lstrip())
-        lines = [line[indent:] for line in lines]
-        code = "\n".join(lines)
-        return code
-
-    def add_functions(self, funcs: List[Callable[..., Any]]) -> List[str]:
-        # TODO: Should copy into template in the order they are passed
-        source_codes = [self._getsource(func) for func in funcs]
-        return source_codes
+    def generate_template(self) -> None:
+        write_template(
+            "test_protocol.py",
+            imports=self.imports,
+            config=ColorMixingProtocolConfig,
+            run_func=self.run,
+            metadata=self.metadata,  # TODO: Switch to MetaDataConfig
+            funcs=[next_location],  # TODO: Remove this func, just here to testing
+            template_file="protocol.j2",
+        )
 
     def action(self, c1: str, c2: str, c3: str, v1: int, v2: int, v3: int):
         # TODO: Color is probably a data type with name and location (Namedtuple).
@@ -140,7 +133,8 @@ class ColorMixingGym:
             pipette=self.robot.pipette,
             sourceplate=self.robot.sourceplate,
         )
-        self.run(config)
+        # TODO: Generate template protocol and submit config to job
+        print(config)
 
     def run_(config: ColorMixingProtocolConfig):
         # TODO: Can expose interface to write your run function here which
@@ -157,9 +151,15 @@ class ColorMixingGym:
 
         # self.protopiler.compile(cfg)
 
+    def imports(self) -> None:
+        """This protocol implements the color mixing gym."""
+        from typing import List
+        from opentrons.protocol_api import ProtocolContext
+        from ot2util.config import ProtocolConfig, LabwareConfig, InstrumentConfig
+
     # TODO: Could consider using the template to auto input the parameters so
     #       we don't need to send or parse the configuration yaml
-    def run(protocol: ProtocolContext):
+    def run(protocol: ProtocolContext) -> None:
 
         # Load the protocol configuration
         cfg = ColorMixingProtocolConfig.get_config(protocol)
@@ -188,8 +188,13 @@ class ColorMixingGym:
         pass
 
 
+metadata = {
+    "protocolName": "My Protocol",
+    "author": "Name <email@address.com>",
+    "description": "Simple protocol to get started using OT2",
+    "apiLevel": "2.12",
+}
+
 if __name__ == "__main__":
-    gym = ColorMixingGym()
-    source_codes = gym.add_functions([next_location, gym.run])
-    for code in source_codes:
-        print(code)
+    gym = ColorMixingGym(metadata=metadata)
+    gym.generate_template()

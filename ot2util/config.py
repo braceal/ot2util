@@ -1,11 +1,13 @@
 """Settings for specific configurations of OT2 machines and experiments."""
 import json
 import yaml
+import inspect
 import argparse
 from pathlib import Path
-from typing import Type, TypeVar, Union, Optional, List
+from typing import Type, TypeVar, Union, Optional, List, Dict, Callable, Any
 from pydantic import BaseSettings as _BaseSettings
 from opentrons.protocol_api import ProtocolContext
+from jinja2 import Environment, FileSystemLoader
 
 _T = TypeVar("_T")
 
@@ -102,24 +104,30 @@ class OpentronsConfig(BaseSettings):
     """Compress files for transfering, slow operation, avoid if possible"""
 
 
+# TODO: Incorporate this and use it to write the jinja template
+class MetaDataConfig(BaseSettings):
+    protocolName: str = "My Protocol"
+    author: str = "Name <email@address.com>"
+    description: str = "Simple protocol to get started using OT2"
+    apiLevel: str = "2.12"
+
+
 class ProtocolConfig(BaseSettings):
     """Basic configuration for running a protocol."""
 
-    # Path to write data to on the raspberry pi
     workdir: Path = Path("/root")
     """Workdir for the raspberry pi in the OT2"""
 
 
 class ExperimentConfig(BaseSettings):
-    # Connect to one (or many) OT-2s
     robots: List[OpentronsConfig] = []
-    """Robots available to run experiments on"""
-    # Directory to write experimental results to
+    """Robots available to run experiments on. Connect to one (or many) OT-2s"""
     output_dir: Path = Path()
     """Local directory to pull results into from the OT2 experiments"""
-    # Toggle simulation
     run_simulation: bool = True
     """Whether or not to run a simulation or an actual experiment"""
+    metadata: MetaDataConfig = MetaDataConfig()
+    """Opentrons metadata to specify in the protocol."""
 
 
 def parse_args() -> argparse.Namespace:
@@ -143,3 +151,48 @@ def parse_args() -> argparse.Namespace:
     )
     args = parser.parse_args()
     return args
+
+
+def _getsource(func: Callable[..., Any]) -> str:
+    code = inspect.getsource(func)
+    lines = code.split("\n")
+    indent = len(lines[0]) - len(lines[0].lstrip())
+    lines = [line[indent:] for line in lines]
+    code = "\n".join(lines)
+    return code
+
+
+def get_function_source_codes(funcs: List[Callable[..., Any]]) -> List[str]:
+    # TODO: Should copy into template in the order they are passed
+    source_codes = [_getsource(func) for func in funcs]
+    return source_codes
+
+
+def to_template(
+    imports: Callable[[], None],
+    config: ProtocolConfig,
+    run_func: Callable[[ProtocolContext], None],
+    metadata: Dict[str, str],  # TODO: Switch to MetaDataConfig
+    funcs: List[Callable[..., Any]] = [],
+    template_file: str = "protocol.j2",
+) -> str:
+    function_codes = get_function_source_codes(funcs + [run_func])
+    context = {
+        "imports": _getsource(imports),
+        "config": inspect.getsource(config),
+        "metadata": metadata,
+        "function_codes": function_codes,
+    }
+    file_loader = FileSystemLoader("templates")
+    env = Environment(
+        loader=file_loader, trim_blocks=True, lstrip_blocks=True, autoescape=False
+    )
+    template = env.get_template(template_file)
+    return template.render(context)
+
+
+def write_template(filename: PathLike, *args, **kwargs) -> Path:
+    with open(filename, "w") as fp:
+        txt = to_template(*args, **kwargs)
+        fp.write(txt)
+    return Path(fp.name)
