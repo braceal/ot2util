@@ -45,6 +45,7 @@ class WellPlate:
 
     def get_open_well(self) -> str:
         # TODO: If empty, raise error.
+        #       Or instead of raising error, return None.
         return ""
 
 
@@ -55,6 +56,7 @@ class Tiprack:
 
     def get_tip(self) -> str:
         # TODO: If empty, raise error.
+        #       Or instead of raising error, return None.
         return ""
 
     def get_tips(self, n: int) -> List[str]:
