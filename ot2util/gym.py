@@ -53,7 +53,7 @@ def write_template(filename: PathLike, *args: Any, **kwargs: Any) -> Path:
     return Path(fp.name)
 
 
-class Gym:
+class Robot:
     config_class: ProtocolConfig = ProtocolConfig()
 
     def __init__(self, metadata: Union[MetaDataConfig, Dict[str, str]]) -> None:
