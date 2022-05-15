@@ -14,7 +14,7 @@ class ColorMixingProtocolConfig(ProtocolConfig):
     source_wells: List[str] = ["A1", "A2", "A3"]
     source_volumes: List[int] = [10, 5, 10]
     # Volume to aspirate and dispense
-    tips: str = ["A1", "A2", "A3"]
+    tips: List[str] = ["A1", "A2", "A3"]
     """Each experiment needs to specify all of the tips it
     will use to mix the three colors."""
     target_well: str = "B1"
@@ -38,9 +38,8 @@ def next_location(cur_location: str) -> str:
 
 
 class WellPlate:
-    def __init__(self, location: str, name: str, reserved: Set[str] = set()):
-        self.location = location
-        self.name = name
+    def __init__(self, name: str, location: str, reserved: Set[str] = set()):
+        self.config = LabwareConfig(name=name, location=location)
         self.reserved = reserved
 
     def get_open_well(self) -> str:
@@ -54,9 +53,8 @@ class WellPlate:
 
 
 class Tiprack:
-    def __init__(self, location: str, name: str):
-        self.location = location
-        self.name = name
+    def __init__(self, name: str, location: str):
+        self.config = LabwareConfig(name=name, location=location)
 
     def get_tip(self) -> str:
         # TODO: If empty, raise error.
@@ -84,38 +82,35 @@ class ColorMixingRobot(Robot):
 
     def __init__(self, metadata: Union[MetaDataConfig, Dict[str, str]]):
         super().__init__(metadata)
-        # TODO: Think about this interface more
-        self.labware = None
-        self.instruments = None
         # Reserve 3 wells for the primary colors to mix
-        # TODO: Actually, that is what the sourceplate is for,
-        #       but it might still be useful to have reserved option
-        self.wellplate = WellPlate(location="2", name="corning_96_wellplate_360ul_flat")
-        # TODO: Combine LabwareConfig/Wellplate with pydantic dataclasses (needs refactor)
-        self.tiprack = Tiprack(name="opentrons_96_tiprack_300ul", location="1")
-        self.pipette: InstrumentConfig = InstrumentConfig(
-            name="p300_single", mount="left"
+        self.wellplate = WellPlate(
+            name="corning_96_wellplate_360ul_flat",
+            location="2",
+            reserved=set(["A5", "A6"]),
         )
-        self.sourceplate: LabwareConfig = LabwareConfig(
+        self.tiprack = Tiprack(name="opentrons_96_tiprack_300ul", location="1")
+        self.pipette = InstrumentConfig(name="p300_single", mount="left")
+        self.sourceplate = LabwareConfig(
             name="corning_6_wellplate_16.8ml_flat", location="3"
         )
 
     def submit(self, source_wells: List[str], source_volumes: List[str]) -> None:
 
         target_well: str = self.wellplate.get_open_well()
-        target_tips: List[str] = self.tiprack.get_tips(n=3)
+        tips: List[str] = self.tiprack.get_tips(n=3)
 
         config = ColorMixingProtocolConfig(
             source_wells=source_wells,
             source_volumes=source_volumes,
-            target_tips=target_tips,
+            tips=tips,
             target_well=target_well,
-            wellplate=LabwareConfig(self.wellplate.name, self.wellplate.location),
-            tiprack=LabwareConfig(self.tiprack.name, self.tiprack.location),
+            wellplate=self.wellplate.config,
+            tiprack=self.tiprack.config,
             pipette=self.pipette,
             sourceplate=self.sourceplate,
         )
         print(config)
+        return config
 
         # TODO: Threading logic for submitting to real opentrons
         # TODO: Generate template protocol and submit config to job
@@ -207,4 +202,7 @@ metadata = {
 if __name__ == "__main__":
     robot = ColorMixingRobot(metadata=metadata)
     # TODO: Next location is not needed, just present for testing purposes
-    robot.generate_template("test_protocol.py", funcs=[next_location])
+    # robot.generate_template("test_protocol.py", funcs=[next_location])
+
+    cfg = robot.submit(["A1", "A2", "A3"], [10, 10, 10])
+    cfg.write_yaml("color_test.yaml")
