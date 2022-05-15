@@ -38,14 +38,18 @@ def next_location(cur_location: str) -> str:
 
 
 class WellPlate:
-    def __init__(self, reserved: Set[str], location: str, name: str):
-        self.reserved = reserved
+    def __init__(self, location: str, name: str, reserved: Set[str] = set()):
         self.location = location
         self.name = name
+        self.reserved = reserved
 
     def get_open_well(self) -> str:
         # TODO: If empty, raise error.
         #       Or instead of raising error, return None.
+        # while True:
+        #     well = self.get_well()
+        #     if well not in self.reserved:
+        #         return well
         return ""
 
 
@@ -86,11 +90,8 @@ class ColorMixingRobot(Robot):
         # Reserve 3 wells for the primary colors to mix
         # TODO: Actually, that is what the sourceplate is for,
         #       but it might still be useful to have reserved option
-        self.wellplate = WellPlate(
-            reserved={"A1", "B1", "C1"},
-            location="2",
-            name="corning_96_wellplate_360ul_flat",
-        )
+        self.wellplate = WellPlate(location="2", name="corning_96_wellplate_360ul_flat")
+        # TODO: Combine LabwareConfig/Wellplate with pydantic dataclasses (needs refactor)
         self.tiprack = Tiprack(name="opentrons_96_tiprack_300ul", location="1")
         self.pipette: InstrumentConfig = InstrumentConfig(
             name="p300_single", mount="left"
@@ -99,8 +100,25 @@ class ColorMixingRobot(Robot):
             name="corning_6_wellplate_16.8ml_flat", location="3"
         )
 
-    def submit(self):
+    def submit(self, source_wells: List[str], source_volumes: List[str]) -> None:
+
+        target_well: str = self.wellplate.get_open_well()
+        target_tips: List[str] = self.tiprack.get_tips(n=3)
+
+        config = ColorMixingProtocolConfig(
+            source_wells=source_wells,
+            source_volumes=source_volumes,
+            target_tips=target_tips,
+            target_well=target_well,
+            wellplate=LabwareConfig(self.wellplate.name, self.wellplate.location),
+            tiprack=LabwareConfig(self.tiprack.name, self.tiprack.location),
+            pipette=self.pipette,
+            sourceplate=self.sourceplate,
+        )
+        print(config)
+
         # TODO: Threading logic for submitting to real opentrons
+        # TODO: Generate template protocol and submit config to job
         workdir = ""
         self.generate_template(workdir + "/protocol.py")
 
@@ -117,13 +135,6 @@ class ColorMixingRobot(Robot):
     # TODO: As an alternative to implementing the run function
     #       you can use the protopiler interface to implement the
     #       run function.
-    # TODO: Could consider using the template to auto input the parameters so
-    #       we don't need to send or parse the configuration yaml
-    # TODO: Perhaps the run function, submit, etc should belong to individual
-    #       robots. That way you can make a robot class and the gym can call
-    #       the appropriate functions to implement the action. This would make
-    #       more sense in the case where robots run different protocols that have
-    #       dependencies on another protocol finshing.
     def run(protocol: ProtocolContext) -> None:
 
         # Load the protocol configuration
@@ -161,37 +172,19 @@ class ColorMixingGym(Gym):
     def __init__(self, metadata: Union[MetaDataConfig, Dict[str, str]]):
         # Define envirnomental parameters
         self.camera = None
+        # TODO: Have a list of ColorMixingRobots
         self.robot = ColorMixingRobot(metadata)
         # self.protopiler = Protopiler()
 
     def action(self, c1: str, c2: str, c3: str, v1: int, v2: int, v3: int):
         # TODO: Color is probably a data type with name and location (Namedtuple).
         #       Suppose for now they are location names e.g. "A1"
-        target_well: str = self.robot.wellplate.get_open_well()
-        target_tips: List[str] = self.robot.get_tips(n=3)
 
-        # TODO: Combine LabwareConfig/Wellplate with pydantic dataclasses (needs refactor)
-        # TODO: Add to robot and replace with
-        # # self.robot.submit(
-        #     source_wells=[c1, c2, c3],
-        #     source_volumes=[v1, v2, v3],
-        #     target_tips=target_tips,
-        #     target_well=target_well,
-        # )
-        config = ColorMixingProtocolConfig(
-            source_wells=[c1, c2, c3],
-            source_volumes=[v1, v2, v3],
-            target_tips=target_tips,
-            target_well=target_well,
-            wellplate=LabwareConfig(
-                self.robot.wellplate.name, self.robot.wellplate.location
-            ),
-            tiprack=LabwareConfig(self.robot.tiprack.name, self.robot.tiprack.location),
-            pipette=self.robot.pipette,
-            sourceplate=self.robot.sourceplate,
-        )
-        # TODO: Generate template protocol and submit config to job
-        print(config)
+        source_wells = [c1, c2, c3]
+        source_volumes = [v1, v2, v3]
+
+        self.robot.submit(source_wells, source_volumes)
+
         # TODO: Maybe it's a good idea to submit action to a thread pool
         #       so we can block the thread until the protocol is finished
         #       and then have it run the camera command all in the same thread.

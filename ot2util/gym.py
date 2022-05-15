@@ -16,7 +16,6 @@ def _getsource(func: Callable[..., Any]) -> str:
 
 
 def get_function_source_codes(funcs: List[Callable[..., Any]]) -> List[str]:
-    # TODO: Should copy into template in the order they are passed
     source_codes = [_getsource(func) for func in funcs]
     return source_codes
 
@@ -82,6 +81,6 @@ class Robot:
         """Include imports here."""
         pass
 
-    def run(self) -> None:
+    def run(self, protcol: ProtocolContext) -> None:
         """Implement opentrons protocol here."""
         pass
