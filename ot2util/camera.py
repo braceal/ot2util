@@ -1,11 +1,12 @@
 """Allows for integration of camera into experiments.
 """
 
-import cv2
 import colorsys
+from typing import Tuple
+
+import cv2
 import cv2.aruco
 import numpy as np
-from typing import Tuple
 
 ColorRGB = Tuple[int, int, int]
 ColorHSV = Tuple[float, float, float]
