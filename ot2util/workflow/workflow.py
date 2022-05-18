@@ -1,4 +1,4 @@
-"""Define Gym interface."""
+"""Define Workflow interface."""
 
 from concurrent.futures import Future
 from typing import Any, List, Set
@@ -6,8 +6,8 @@ from typing import Any, List, Set
 from ot2util.experiment import Experiment
 
 
-class Gym:
-    """Gym base class."""
+class Workflow:
+    """Workflow base class."""
 
     def __init__(self) -> None:
         self.futures: Set[Future[int]] = set()

@@ -1,4 +1,4 @@
-"""A gym for color mixing protocols."""
+"""A workflow for color mixing protocols."""
 import logging
 from pathlib import Path
 from typing import List
@@ -13,8 +13,8 @@ from ot2util.config import (
     WorkflowConfig,
 )
 from ot2util.experiment import Experiment, OpenTronsRobot, RobotPool
-from ot2util.gym.gym import Gym
 from ot2util.labware import TipRack, WellPlate
+from ot2util.workflow.workflow import Workflow
 
 logger = logging.getLogger(__name__)
 
@@ -90,6 +90,8 @@ class ColorMixingRobot(OpenTronsRobot):
 
         # Create new experiment
         experiment = Experiment(name, self.output_dir, config)
+
+        # TODO: Change function name to generate_protocol
         self.generate_template(experiment.protocol)
         return experiment
 
@@ -100,7 +102,7 @@ class ColorMixingRobot(OpenTronsRobot):
         return None
 
     def imports(self) -> None:
-        """This protocol implements the color mixing gym."""
+        """This protocol implements the color mixing workflow."""
         from typing import List  # noqa
 
         from opentrons.protocol_api import ProtocolContext  # noqa
@@ -136,7 +138,7 @@ class ColorMixingRobot(OpenTronsRobot):
             pipette.drop_tip()
 
 
-class ColorMixingGym(Gym):
+class ColorMixingWorkflow(Workflow):
     def __init__(self, config: ColorMixingWorkflowConfig) -> None:
         super().__init__()
         self.robots = [

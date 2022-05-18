@@ -12,7 +12,7 @@ from typing import List
 
 from ot2util.agent import Agent
 from ot2util.config import parse_args
-from ot2util.gym import ColorMixingGym, ColorMixingWorkflowConfig
+from ot2util.workflow import ColorMixingWorkflow, ColorMixingWorkflowConfig
 
 logger = logging.getLogger("ot2util")
 
@@ -26,7 +26,7 @@ class GridSearch(Agent):
     def __init__(self, config: GridSearchConfig) -> None:
         super().__init__(config)
 
-        self.gym = ColorMixingGym(config)
+        self.workflow = ColorMixingWorkflow(config)
 
         # Number of unique experiments to run
         self.num_experiments = len(str(len(self.config.volume_values)))
@@ -40,9 +40,9 @@ class GridSearch(Agent):
         # Loop over color combinations
         for itr, colors in enumerate(itertools.combinations(sourcecolors, 3)):
             name = f"experiment-{itr:0{self.num_experiments}d}"
-            self.gym.action(name, colors, volumes)
+            self.workflow.action(name, colors, volumes)
             if (itr + 1) % 2 == 0:
-                experiments = self.gym.wait()
+                experiments = self.workflow.wait()
                 for experiment in experiments:
                     logger.info(experiment)
 
