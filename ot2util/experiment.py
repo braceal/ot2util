@@ -296,7 +296,7 @@ class RobotPool:
                 if not robot.running:
                     robot.running = True
                     return robot
-            time.sleep(30)  # Wait 30 seconds and try again
+            time.sleep(5)  # Wait 5 seconds and try again
 
     def _run(self, name: str, *args: Any, **kwargs: Any) -> int:
         """Execute an experiment object.
