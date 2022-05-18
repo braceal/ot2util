@@ -24,7 +24,6 @@ class GridSearchConfig(ColorMixingWorkflowConfig):
 
 class GridSearch(Agent):
     def __init__(self, config: GridSearchConfig) -> None:
-        # Creates self.config, self.robot_pool fields
         super().__init__(config)
 
         self.gym = ColorMixingGym(config)
