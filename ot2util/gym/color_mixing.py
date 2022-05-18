@@ -154,7 +154,7 @@ class ColorMixingGym(Gym):
         )
         self.futures.add(future)
 
-        # returncode = future.result()
+        # experiment = future.result()
         # logger.info(f"Experiment {name} finished with returncode: {returncode}")
 
     def state(self) -> None:  # noqa
