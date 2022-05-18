@@ -7,11 +7,14 @@ See search_results/ for a simulated output.
 """
 
 import itertools
+import logging
 from typing import List
 
 from ot2util.agent import Agent
 from ot2util.config import parse_args
 from ot2util.gym import ColorMixingGym, ColorMixingWorkflowConfig
+
+logger = logging.getLogger("ot2util")
 
 
 class GridSearchConfig(ColorMixingWorkflowConfig):
@@ -39,12 +42,16 @@ class GridSearch(Agent):
         for itr, colors in enumerate(itertools.combinations(sourcecolors, 3)):
             name = f"experiment-{itr:0{self.num_experiments}d}"
             self.gym.action(name, colors, volumes)
+            if itr % 2 == 0:
+                experiments = self.gym.wait()
+                for experiment in experiments:
+                    logger.info(experiment)
 
 
 if __name__ == "__main__":
     args = parse_args()
     cfg = GridSearchConfig.from_yaml(args.config)
     gridsearch = GridSearch(cfg)
-    print("Running gridsearch")
+    logger.info("Running gridsearch")
     gridsearch.run()
-    print("Done running gridsearch")
+    logger.info("Done running gridsearch")

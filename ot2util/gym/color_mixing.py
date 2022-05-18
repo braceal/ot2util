@@ -138,6 +138,7 @@ class ColorMixingRobot(OpenTronsRobot):
 
 class ColorMixingGym(Gym):
     def __init__(self, config: ColorMixingWorkflowConfig) -> None:
+        super().__init__()
         self.robots = [
             ColorMixingRobot(robot, config.output_dir) for robot in config.robots
         ]
@@ -151,9 +152,10 @@ class ColorMixingGym(Gym):
         future = self.robot_pool.submit(
             name=name, source_wells=colors, source_volumes=volumes
         )
+        self.futures.add(future)
 
-        returncode = future.result()
-        logger.info(f"Experiment {name} finished with returncode: {returncode}")
+        # returncode = future.result()
+        # logger.info(f"Experiment {name} finished with returncode: {returncode}")
 
     def state(self) -> None:  # noqa
         # TODO: Retrieve camera values

@@ -2,13 +2,15 @@
 """
 
 import inspect
+import logging
 import subprocess
 import time
-from concurrent.futures import Future, ThreadPoolExecutor, wait
+from concurrent.futures import Future, wait
 from pathlib import Path
 from typing import Any, Callable, List, Optional, Union
 
 import black
+import pebble
 from fabric import Connection
 from invoke.runners import Result
 from jinja2 import Environment, PackageLoader
@@ -20,6 +22,8 @@ from ot2util.config import (
     ProtocolConfig,
     RobotConnectionConfig,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def _getsource(func: Callable[..., Any]) -> str:
@@ -90,6 +94,11 @@ class Experiment:
 
         # Create new experiment directory
         self.output_dir.mkdir()
+
+        self.returncode: int = -1
+
+    def __str__(self) -> str:
+        return f"{self.__class__.__name__}(name={self.name}, retcode={self.returncode})"
 
 
 class RobotConnection:
@@ -231,14 +240,8 @@ class Robot:
 
     def run_experiment(self, experiment: Experiment) -> int:
         if self._run_local:
-            returncode = self.run_local(experiment)
-        else:
-            returncode = self.run_remote(experiment)
-        if returncode != 0:
-            raise ValueError(
-                f"Experiment {experiment.name} exited with returncode: {returncode}"
-            )
-        return returncode
+            return self.run_local(experiment)
+        return self.run_remote(experiment)
 
     def run_remote(self, experiment: Experiment) -> int:
         raise NotImplementedError
@@ -275,10 +278,14 @@ class RobotPool:
             List of robots available.
         """
         self.robots = robots
-        self.pool = ThreadPoolExecutor(max_workers=len(self.robots) + 1)
+        self.pool = pebble.ThreadPool(max_workers=len(self.robots))
 
-    def submit(self, name: str, *args: Any, **kwargs: Any) -> Future[int]:
-        fut = self.pool.submit(self._run, name, *args, **kwargs)
+    def __del__(self) -> None:
+        self.pool.close()
+        self.pool.join()
+
+    def submit(self, name: str, *args: Any, **kwargs: Any) -> Future[Experiment]:
+        fut = self.pool.schedule(self._run, args=(name, *args), kwargs=kwargs)
         if len(self.robots) == 1:
             # wait returns a named tuple of futures wait().done is
             # a set of completed futures and since we only have a single
@@ -287,17 +294,17 @@ class RobotPool:
             return wait([fut]).done.pop()
         return fut
 
+    @pebble.synchronized
     def _get_robot(self) -> Robot:
-        # TODO: This function needs to get a lock around robot.running checks
-        #       May need to use pebble to use the syncronization decorator.
         while True:
             for robot in self.robots:
                 if not robot.running:
                     robot.running = True
                     return robot
-            time.sleep(5)  # Wait 5 seconds and try again
+            if not robot.run_local:
+                time.sleep(10)  # Wait 10 seconds and try again
 
-    def _run(self, name: str, *args: Any, **kwargs: Any) -> int:
+    def _run(self, name: str, *args: Any, **kwargs: Any) -> Experiment:
         """Execute an experiment object.
 
         Will execute an experiment according to the paramters of the experiment.
@@ -325,13 +332,21 @@ class RobotPool:
         # Run the experiment
         returncode = robot.run_experiment(experiment)
 
+        # TODO: This should probably be checked elsewhere
+        if returncode != 0:
+            raise ValueError(
+                f"Experiment {experiment.name} exited with returncode: {returncode}"
+            )
+
+        experiment.returncode = returncode
+
         # If experiment was successful, run post-execution steps
         robot.post_experiment(experiment, *args, **kwargs)
 
         # Free robot for next experiment
         robot.running = False
 
-        return returncode
+        return experiment
 
 
 class OpenTronsRobot(Robot):
