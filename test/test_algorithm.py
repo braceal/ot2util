@@ -1,8 +1,8 @@
-def test_algorithm_init():
-    from ot2util.config import ExperimentConfig
-    from ot2util.algorithm import Algorithm
+def test_agent_init():
+    from ot2util.agent import Agent
+    from ot2util.config import WorkflowConfig
 
-    cfg = ExperimentConfig()
-    algorithm = Algorithm(cfg)
-    correct = "Algorithm(robots=[] output_dir=PosixPath('.') run_simulation=True)"
-    assert str(algorithm) == correct
+    cfg = WorkflowConfig()
+    agent = Agent(cfg)
+    correct = "Agent(robots=[] output_dir=PosixPath('.') run_simulation=True)"
+    assert str(agent) == correct

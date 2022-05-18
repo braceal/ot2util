@@ -1,9 +1,11 @@
 """Settings for specific configurations of OT2 machines and experiments."""
-import json
-import yaml
 import argparse
+import json
 from pathlib import Path
-from typing import Type, TypeVar, Union, Optional, List
+from typing import List, Optional, Type, TypeVar, Union
+
+import yaml
+from opentrons.protocol_api import ProtocolContext
 from pydantic import BaseSettings as _BaseSettings
 
 _T = TypeVar("_T")
@@ -47,6 +49,19 @@ class BaseSettings(_BaseSettings):
         raw_data = yaml.safe_load(raw_bytes)
         return cls(**raw_data)  # type: ignore[call-arg]
 
+    @classmethod
+    def get_config(cls: Type[_T], protocol: ProtocolContext) -> _T:
+        """Load configuration file when running an opentrons protocol."""
+        # https://github.com/Opentrons/opentrons/blob/edge/api/src/opentrons/util/entrypoint_util.py#L59
+        # protocol.bundled_data["config.yaml"] will contain the raw bytes of the config file
+        # TODO: There is a bug in the opentrons code which does not pass this parameter
+        #       correctly during opentrons_execute commands.
+        if "config.yaml" in protocol.bundled_data:
+            return cls.from_bytes(protocol.bundled_data["config.yaml"])  # type: ignore
+        # As a quick fix, we hard code a path to write config files to.
+        remote_dir = Path("/root/test1")
+        return cls.from_yaml(remote_dir / "config.yaml")  # type: ignore
+
 
 class LabwareConfig(BaseSettings):
     """Configuration for the labware in the deck of OT2"""
@@ -66,46 +81,65 @@ class InstrumentConfig(BaseSettings):
     """Location, either `'right', 'left'`"""
 
 
-class OpentronsConfig(BaseSettings):
-    # Remote setup parameters (None if running locally)
-    # Remote directory path to stage experiments in
+class RobotConnectionConfig(BaseSettings):
     remote_dir: Path
-    """Path of directory to store results on OT2, will be removed at end of experiment"""
-    # Remote host i.e. [user@]host
+    """Path of directory to store results on the robot,
+    will be removed at end of experiment"""
     host: str
-    """Host information of OT2 robot, i.e `[user@]host`"""
-    # Port to connect to OT-2 with
+    """Host information of the robot, i.e `[user@]host`."""
     port: int = 22
-    """Port to connect to OT2, unless otherwise specified, use normal ssh port (22)"""
-    # Private key path (defaults to ~/.ssh/id_rsa)
+    """Port to connect to robot, unless otherwise specified, use normal ssh port (22)."""
     key_filename: Optional[str] = None
-    """Path to your OT2 ssh-key, refer to OT2 documentation for setup"""
-    # Path to opentrons_simulate or opentrons_execute directory
-    opentrons_path: Path = Path("/bin")
-    """Path to `opentrons` program executable """
-    # Whether or not to tar files before transferring from remote to local
+    """Path to your private ssh-key, refer to OT2 documentation for setup
+    (defaults to ~/.ssh/id_rsa)."""
     tar_transfer: bool = False
-    """Compress files for transfering, slow operation, avoid if possible"""
+    """Compress files for transfering from remote to local,
+    slow operation, avoid if possible."""
+
+
+class MetaDataConfig(BaseSettings):
+    """Configuration for specifying Opentrons metadata."""
+
+    protocolName: str = "My Protocol"
+    author: str = "Name <email@address.com>"
+    description: str = "Simple protocol to get started using OT2"
+    apiLevel: str = "2.12"
 
 
 class ProtocolConfig(BaseSettings):
     """Basic configuration for running a protocol."""
 
-    # Path to write data to on the raspberry pi
     workdir: Path = Path("/root")
-    """Workdir for the raspberry pi in the OT2"""
+    """Workdir for the experiment running on remote."""
 
 
-class ExperimentConfig(BaseSettings):
-    # Connect to one (or many) OT-2s
-    robots: List[OpentronsConfig] = []
-    """Robots available to run experiments on"""
-    # Directory to write experimental results to
-    output_dir: Path = Path()
-    """Local directory to pull results into from the OT2 experiments"""
-    # Toggle simulation
-    run_simulation: bool = True
+class RobotConfig(BaseSettings):
+    """Configuration for using a robot."""
+
+    connection: Optional[RobotConnectionConfig] = None
+    """Configuration for connecting to the robot via ssh."""
+
+
+class OpentronsRobotConfig(RobotConfig):
+    """Configuration for using and Opentrons robot."""
+
+    metadata: MetaDataConfig = MetaDataConfig()
+    """Opentrons metadata to specify in the protocol."""
+    opentrons_path: Path = Path("/bin")
+    """Path to opentrons_simulate or opentrons_execute directory."""
+    run_simulation: bool = False
     """Whether or not to run a simulation or an actual experiment"""
+    run_local: bool = False
+    """Whether or not to run the local in simulated mode"""
+
+
+class WorkflowConfig(BaseSettings):
+    """Configuration for specifiying an experimental workflow."""
+
+    robots: List[RobotConfig] = []
+    """Robots available to run experiments on. Connect to one or many."""
+    output_dir: Path = Path()
+    """Local directory to pull results into from the remote experiments"""
 
 
 def parse_args() -> argparse.Namespace:
@@ -121,7 +155,7 @@ def parse_args() -> argparse.Namespace:
     -------
     >>> from ot2util.config import parse_args
     >>> args = parse_args()
-    >>> cfg = ExperimentConfig.from_yaml(args.config)
+    >>> cfg = WorkflowConfig.from_yaml(args.config)
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(

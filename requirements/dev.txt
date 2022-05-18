@@ -4,6 +4,8 @@ black
 flake8
 pytest
 isort
+pylint
+pydocstyle
 
 # Documentation requirements 
 sphinx==4.5.0

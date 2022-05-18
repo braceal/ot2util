@@ -11,15 +11,12 @@ opentrons_execute protocol.py -d config.yaml
 Modify config.yaml as needed
 """
 
-from typing import List
 from pathlib import Path
+from typing import List
+
 from opentrons import protocol_api
-from ot2util.config import (
-    ProtocolConfig,
-    LabwareConfig,
-    InstrumentConfig,
-    ExperimentResult,
-)
+
+from ot2util.config import BaseSettings, InstrumentConfig, LabwareConfig, ProtocolConfig
 
 
 def next_location(cur_location: str) -> str:
@@ -33,6 +30,12 @@ def next_location(cur_location: str) -> str:
     if letter == "I" and number == "12":
         return ""
     return letter + number
+
+
+class ExperimentResult(BaseSettings):
+    next_target_tip: str
+    next_target_well: str
+    cur_target_well: str
 
 
 class SimpleProtocolConfig(ProtocolConfig):
@@ -78,7 +81,6 @@ def run(protocol: protocol_api.ProtocolContext):
 
     target_tip = cfg.target_tip
     target_well = cfg.target_well
-    # next_empty_well = protocol_cfg.next_empty_well
     source_wells = cfg.source_wells
     source_volumes = cfg.source_volumes
 
@@ -108,7 +110,6 @@ def run(protocol: protocol_api.ProtocolContext):
     }
     experiment_result = ExperimentResult(**result)
     experiment_result.dump_yaml(cfg.workdir / "experiment_result.yaml")
-    # (cfg.workdir / "experiment-result").touch()
 
 
 if __name__ == "__main__":

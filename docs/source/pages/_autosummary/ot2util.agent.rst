@@ -1,7 +1,7 @@
-ot2util.algorithm
-=================
+ot2util.agent
+=============
 
-.. automodule:: ot2util.algorithm
+.. automodule:: ot2util.agent
 
    
    
@@ -17,7 +17,7 @@ ot2util.algorithm
 
    .. autosummary::
    
-      Algorithm
+      Agent
    
    
 

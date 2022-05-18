@@ -9,6 +9,14 @@ ot2util.experiment
 
    
    
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      get_function_source_codes
+      to_template
+      write_template
+   
    
 
    
@@ -18,8 +26,10 @@ ot2util.experiment
    .. autosummary::
    
       Experiment
-      ExperimentManager
-      Opentrons
+      OpenTronsRobot
+      Robot
+      RobotConnection
+      RobotPool
    
    
 
