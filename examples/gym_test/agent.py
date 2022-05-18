@@ -36,12 +36,12 @@ class GridSearch(Agent):
         # TODO: Assuming volumes are constant for now
         volumes = [10, 10, 10]
         # TODO: Make data structure for colors?
-        sourcecolors = ["A1", "A2", "A3", "B1", "B2"]
+        sourcecolors = ["A1", "A2", "A3", "B1"]  # ,"B2"]
         # Loop over color combinations
         for itr, colors in enumerate(itertools.combinations(sourcecolors, 3)):
             name = f"experiment-{itr:0{self.num_experiments}d}"
             self.gym.action(name, colors, volumes)
-            if itr % 2 == 0:
+            if (itr + 1) % 2 == 0:
                 experiments = self.gym.wait()
                 for experiment in experiments:
                     logger.info(experiment)
