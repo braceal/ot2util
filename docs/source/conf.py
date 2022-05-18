@@ -12,6 +12,7 @@
 #
 import os
 import sys
+import datetime
 
 sys.path.insert(0, os.path.abspath("../.."))
 import ot2util  # noqa
@@ -20,8 +21,9 @@ import ot2util  # noqa
 # -- Project information -----------------------------------------------------
 
 project = "ot2util"
-copyright = "2022, Alexander Brace, Yuanjian Liu, Kyle Hippe"
 author = "Alexander Brace, Yuanjian Liu, Kyle Hippe"
+now = datetime.datetime.now()
+copyright = f"2022-{now.year}, {author}"
 
 # The full version, including alpha/beta/rc tags
 release = ot2util.__version__
