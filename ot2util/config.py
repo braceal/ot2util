@@ -1,11 +1,12 @@
 """Settings for specific configurations of OT2 machines and experiments."""
-import json
-import yaml
 import argparse
+import json
 from pathlib import Path
-from typing import Type, TypeVar, Union, Optional, List
-from pydantic import BaseSettings as _BaseSettings
+from typing import List, Optional, Type, TypeVar, Union
+
+import yaml
 from opentrons.protocol_api import ProtocolContext
+from pydantic import BaseSettings as _BaseSettings
 
 _T = TypeVar("_T")
 
@@ -80,7 +81,7 @@ class InstrumentConfig(BaseSettings):
     """Location, either `'right', 'left'`"""
 
 
-class OpentronsConfig(BaseSettings):
+class RobotConnectionConfig(BaseSettings):
     # Remote setup parameters (None if running locally)
     # Remote directory path to stage experiments in
     remote_dir: Path
@@ -94,9 +95,6 @@ class OpentronsConfig(BaseSettings):
     # Private key path (defaults to ~/.ssh/id_rsa)
     key_filename: Optional[str] = None
     """Path to your OT2 ssh-key, refer to OT2 documentation for setup"""
-    # Path to opentrons_simulate or opentrons_execute directory
-    opentrons_path: Path = Path("/bin")
-    """Path to `opentrons` program executable """
     # Whether or not to tar files before transferring from remote to local
     tar_transfer: bool = False
     """Compress files for transfering, slow operation, avoid if possible"""
@@ -116,15 +114,27 @@ class ProtocolConfig(BaseSettings):
     """Workdir for the raspberry pi in the OT2"""
 
 
-class ExperimentConfig(BaseSettings):
-    robots: List[OpentronsConfig] = []
+class RobotConfig(BaseSettings):
+    connection: Optional[RobotConnectionConfig] = None
+    """Configuration for connected to the robot via ssh."""
+
+
+class OpentronsRobotConfig(RobotConfig):
+    metadata: MetaDataConfig = MetaDataConfig()
+    """Opentrons metadata to specify in the protocol."""
+    opentrons_path: Path = Path("/bin")
+    """Path to opentrons_simulate or opentrons_execute directory."""
+    run_simulation: bool = False
+    """Whether or not to run a simulation or an actual experiment"""
+    run_local: bool = False
+    """Whether or not to run the local in simulated mode"""
+
+
+class WorkflowConfig(BaseSettings):
+    robots: List[RobotConfig] = []
     """Robots available to run experiments on. Connect to one (or many) OT-2s"""
     output_dir: Path = Path()
     """Local directory to pull results into from the OT2 experiments"""
-    run_simulation: bool = True
-    """Whether or not to run a simulation or an actual experiment"""
-    metadata: MetaDataConfig = MetaDataConfig()
-    """Opentrons metadata to specify in the protocol."""
 
 
 def parse_args() -> argparse.Namespace:
@@ -140,7 +150,7 @@ def parse_args() -> argparse.Namespace:
     -------
     >>> from ot2util.config import parse_args
     >>> args = parse_args()
-    >>> cfg = ExperimentConfig.from_yaml(args.config)
+    >>> cfg = WorkflowConfig.from_yaml(args.config)
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(

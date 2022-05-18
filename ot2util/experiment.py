@@ -1,13 +1,72 @@
 """Encapsulation of experiments allowing specification of arbitrary protocols to be run on OT2.
 """
 
-import time
+import inspect
 import subprocess
-from typing import Optional, Union, List
+import time
+from concurrent.futures import Future, ThreadPoolExecutor, wait
 from pathlib import Path
+from typing import Any, Callable, List, Optional, Union
+
+import black
 from fabric import Connection
 from invoke.runners import Result
-from ot2util.config import ProtocolConfig, OpentronsConfig, PathLike
+from jinja2 import Environment, PackageLoader
+
+from ot2util.config import (
+    MetaDataConfig,
+    OpentronsRobotConfig,
+    PathLike,
+    ProtocolConfig,
+    RobotConnectionConfig,
+)
+
+
+def _getsource(func: Callable[..., Any]) -> str:
+    code = inspect.getsource(func)
+    lines = code.split("\n")
+    indent = len(lines[0]) - len(lines[0].lstrip())
+    lines = [line[indent:] for line in lines]
+    code = "\n".join(lines)
+    return code
+
+
+def get_function_source_codes(funcs: List[Callable[..., Any]]) -> List[str]:
+    source_codes = [_getsource(func) for func in funcs]
+    return source_codes
+
+
+def to_template(
+    imports: Callable[[], None],
+    config_class: ProtocolConfig,
+    run_func: Callable[..., None],
+    metadata: MetaDataConfig,
+    funcs: List[Callable[..., Any]] = [],
+    template_file: str = "protocol.j2",
+) -> str:
+    function_codes = get_function_source_codes(funcs + [run_func])
+    context = {
+        "imports": _getsource(imports),
+        "config_code": inspect.getsource(config_class),  # type: ignore[arg-type]
+        "metadata": metadata,
+        "function_codes": function_codes,
+    }
+    env = Environment(
+        loader=PackageLoader("ot2util"),
+        trim_blocks=True,
+        lstrip_blocks=True,
+        autoescape=False,
+    )
+    template = env.get_template(template_file)
+    return template.render(context)
+
+
+def write_template(filename: Path, *args: Any, **kwargs: Any) -> None:
+    source_code = to_template(*args, **kwargs)
+    # black.format_file_contents(txt, fast=False, mode=black.FileMode())
+    source_code = black.format_str(source_code, mode=black.FileMode(line_length=100))
+    with open(filename, "w") as f:
+        f.write(source_code)
 
 
 def _write_log(contents: Union[str, bytes], path: Path) -> None:
@@ -23,16 +82,10 @@ class Experiment:
     Will be executed by experiment manager
     """
 
-    def __init__(
-        self,
-        name: str,
-        output_dir: PathLike,
-        protocol: PathLike,
-        cfg: ProtocolConfig,
-    ) -> None:
+    def __init__(self, name: str, output_dir: PathLike, cfg: ProtocolConfig) -> None:
         self.name = name
         self.output_dir = Path(output_dir) / name
-        self.protocol = Path(protocol)
+        self.protocol = self.output_dir / "protocol.py"
         self.yaml = self.output_dir / "config.yaml"
         self.cfg = cfg
 
@@ -40,30 +93,25 @@ class Experiment:
         self.output_dir.mkdir()
 
 
-class Opentrons:
-    """Modeling individual robot. Each robot is represented by
-    a connection to a specific robot."""
+class RobotConnection:
+    """Provide an ssh connection to issue remote commands to a robot."""
 
     def __init__(
         self,
-        run_simulation: bool,
         remote_dir: PathLike,
-        host: Optional[str] = None,
+        host: str,
         port: int = 22,
         key_filename: Optional[str] = None,
-        opentrons_path: PathLike = Path("/bin"),
         tar_transfer: bool = False,
     ) -> None:
-        """Initialize a new connection to an Opentrons.
+        """Initialize a new connection to a robot.
 
         Parameters
         ----------
-        run_simulation : bool
-            If True, runs opentrons_simulate instead of opentrons_execute.
         remote_dir : Path
             Path on the opentrons to write intermediate experiment results
             and configuration files to.
-        host : Optional[str], optional
+        host : str
             If specified will connect to the opentrons raspberry pi over
             ssh and allow jobs to be run remotely. To specify :obj:`host`
             use the following format [user@]host. For example, "deploy@web1".
@@ -71,42 +119,32 @@ class Opentrons:
             If :obj:`host` is specified, a path to your private key file
             must be supplied to the Fabric Connection. For example,
             "/home/myuser/.ssh/private.key".
-        opentrons_path : Optional[str], optional
-            Path to directory containing the opentrons_simulate and
-            opentrons_execute commands.
         tar_transfer : bool, optional
             Whether or not to tar files before transferring from the
             raspberry pi to local. Note that this will slow down communcation
             but may be necessary if transferring large files, by default, False.
         """
-        opentrons_exe = "opentrons_simulate" if run_simulation else "opentrons_execute"
-        self.exe = Path(opentrons_path) / opentrons_exe
         self.remote_dir = Path(remote_dir)
         self.host = host
         self.key_filename = key_filename
         self.tar_transfer = tar_transfer
-        # Whether or not an experiment is currently running on this connection
-        self.running = False
 
-        self.conn = None
-        if host is not None:
-            connect_kwargs = {}
-            if key_filename is not None:
-                connect_kwargs["key_filename"] = [key_filename]
+        connect_kwargs = {}
+        if key_filename is not None:
+            connect_kwargs["key_filename"] = [key_filename]
 
-            # TODO: Handle authentication in a better way
-            self.conn = Connection(host=host, port=port, connect_kwargs=connect_kwargs)
-            # Make staging directory on the Opentrons
-            self.conn.run(f"mkdir -p {self.remote_dir}")
-            # TODO: We may be able to add an optional proxy jump to connect
-            #       to the robot from a remote location not connected to the
-            #       robots local WiFi environment.
-            # https://docs.fabfile.org/en/2.6/concepts/networking.html#proxyjump
+        # TODO: Handle authentication in a better way
+        self.conn = Connection(host=host, port=port, connect_kwargs=connect_kwargs)
+        # Make staging directory on the Opentrons
+        self.conn.run(f"mkdir -p {self.remote_dir}")
+        # TODO: We may be able to add an optional proxy jump to connect
+        #       to the robot from a remote location not connected to the
+        #       robots local WiFi environment.
+        # https://docs.fabfile.org/en/2.6/concepts/networking.html#proxyjump
 
     def __del__(self) -> None:
         # Close the remote connection
-        if self.conn is not None:
-            self.conn.close()
+        self.conn.close()
 
     def _scp(self, src: PathLike, dst: PathLike, recursive: bool = False) -> None:
         r = "-r" if recursive else ""
@@ -116,7 +154,6 @@ class Opentrons:
     def _tar_transfer(
         self, experiment: Experiment, workdir: Path, remote_protocol: Path
     ) -> None:
-        assert self.conn is not None
         local_tmp = experiment.output_dir / experiment.name
         remote_tar = workdir.parent / f"{experiment.name}.tar.gz"
         local_tar = str(experiment.output_dir / remote_tar.name)
@@ -150,127 +187,118 @@ class Opentrons:
         else:
             self._scp_transfer(experiment, workdir, remote_protocol)
 
-    def _run_remote(self, experiment: Experiment) -> int:
-        assert self.conn is not None
-
-        # /root/test1/experiment-1
-        workdir = experiment.cfg.workdir = self.remote_dir / experiment.name
-        # Write a yaml protocol configuration to local
-        experiment.cfg.write_yaml(experiment.yaml)
-
-        # Adjust paths to remote workdir
-        remote_protocol = workdir / experiment.protocol.name
-        # TODO: It would be cleaner if remote_yaml was stored in workdir
-        #       but there is a bug in the opentrons code that does not
-        #       propogate the -d argument used to pass the config file
-        #       to the protocol. See protocol.py for more explanation.
-        remote_yaml = workdir.parent / experiment.yaml.name
-
-        # Transfer protocol file and configuration over to remote
-        self.conn.run(f"mkdir -p {workdir}")
-        self._scp(experiment.protocol, f"{self.host}:{remote_protocol}")
-        self._scp(experiment.yaml, f"{self.host}:{remote_yaml}")
-
-        # Execute remote experiment
-        result: Result = self.conn.run(f"{self.exe} {remote_protocol}")
-        _write_log(result.stdout, experiment.output_dir / "stdout.log")
-        _write_log(result.stderr, experiment.output_dir / "stderr.log")
-        returncode: int = result.exited
-        if returncode != 0:
-            # Return early since something went wrong
-            return returncode
-
-        # Transfer experiment results back to local
-        self._transfer(experiment, workdir, remote_protocol)
-
-        # Clean up experiment on remote
-        self.conn.run(f"rm -r {workdir} {remote_yaml}")
-
-        return returncode
-
-    def run(self, experiment: Experiment) -> int:
-        """Runs an experiment given specifications setup by the experiment object.
-
-        Experiment parameters should be set by the `ExperimentManager`
+    def run(self, command: str) -> Result:
+        """Run command on remote shell.
 
         Parameters
         ----------
-        experiment : Experiment
-            Configuration of the experiment. Specifies particulars
-            of the protocol to be run.
+        command : str
+            The command to run.
 
         Returns
         -------
-        int
-            Return code from process executing the protocol.
+        invoke.runners.Result
+            A container for information about the result of a command execution.
         """
-        self.running = True
-        returncode = self._run_remote(experiment)
-        self.running = False
-        return returncode
+        return self.conn.run(command)
 
 
-class ExperimentManager:
-    """Class to manage experiments to be run. Will handle distributing
-    protocols and running them on any/all OT2's available."""
+class Robot:
+    protocol_config_class: ProtocolConfig = ProtocolConfig()
 
-    def __init__(self, run_simulation: bool, robots: List[OpentronsConfig]) -> None:
-        """Initialize the experiment manager with required environmental information
+    def __init__(
+        self,
+        run_local: bool = False,
+        connection: Optional[RobotConnectionConfig] = None,
+    ) -> None:
+        """_summary_
 
         Parameters
         ----------
-        run_simulation : bool
-            Whether or not to run a simulation or execute experiment
-        robots : List[OpentronsConfig]
-            List of OT2 robots available. If `run_simulation=True`, list should be non-empty.
-
-        Raises
-        ------
-        ValueError
-            If `robots` is empty, and `run_simulation=False`
+        run_local : bool
+            Whether or not to run a simulation or execute real experiment.
+        connection : Optional[RobotConnectionConfig], optional
+            Configuration to connect to robot via via ssh.
         """
 
-        if not run_simulation and not robots:
-            raise ValueError("robots must be specified if run_simulation is False")
+        self._run_local = run_local
+        # Initialize ssh connection to robot
+        self.conn = None
+        if connection is not None:
+            self.conn = RobotConnection(**connection.dict())
 
-        self.robots = [
-            Opentrons(
-                run_simulation,
-                r.remote_dir,
-                r.host,
-                r.port,
-                r.key_filename,
-                r.opentrons_path,
-                r.tar_transfer,
+        # Whether or not an experiment is currently running on this robot
+        self.running = False
+
+    def run_experiment(self, experiment: Experiment) -> int:
+        if self._run_local:
+            returncode = self.run_local(experiment)
+        else:
+            returncode = self.run_remote(experiment)
+        if returncode != 0:
+            raise ValueError(
+                f"Experiment {experiment.name} exited with returncode: {returncode}"
             )
-            for r in robots
-        ]
+        return returncode
 
-    def _get_robot(self) -> Opentrons:
+    def run_remote(self, experiment: Experiment) -> int:
+        raise NotImplementedError
+
+    def run_local(self, experiment: Experiment) -> int:
+        raise NotImplementedError
+
+    def run(self, *args: Any, **kwargs: Any) -> None:
+        """Implement protocol here."""
+        raise NotImplementedError
+
+    def setup_experiment(self, name: str, *args: Any, **kwargs: Any) -> Experiment:
+        raise NotImplementedError
+
+    def pre_experiment(self, experiment: Experiment, *args: Any, **kwargs: Any) -> None:
+        return None
+
+    def post_experiment(
+        self, experiment: Experiment, *args: Any, **kwargs: Any
+    ) -> None:
+        return None
+
+
+class RobotPool:
+    """Class to manage experiments to be run. Will handle distributing
+    protocols and running them on any/all OT2's available."""
+
+    def __init__(self, robots: List[Robot]) -> None:
+        """Initialize the experiment manager with required environmental information.
+
+        Parameters
+        ----------
+        robots : List[Robots]
+            List of robots available.
+        """
+        self.robots = robots
+        self.pool = ThreadPoolExecutor(max_workers=len(self.robots) + 1)
+
+    def submit(self, name: str, *args: Any, **kwargs: Any) -> Future[int]:
+        fut = self.pool.submit(self._run, name, *args, **kwargs)
+        if len(self.robots) == 1:
+            # wait returns a named tuple of futures wait().done is
+            # a set of completed futures and since we only have a single
+            # thread in this case, it will have one element so we pop it
+            # from the set and return the Future.
+            return wait([fut]).done.pop()
+        return fut
+
+    def _get_robot(self) -> Robot:
+        # TODO: This function needs to get a lock around robot.running checks
+        #       May need to use pebble to use the syncronization decorator.
         while True:
             for robot in self.robots:
                 if not robot.running:
+                    robot.running = True
                     return robot
             time.sleep(30)  # Wait 30 seconds and try again
 
-    def _run_remote(self, experiment: Experiment) -> int:
-        robot = self._get_robot()
-        return robot.run(experiment)
-
-    def _run_local(self, experiment: Experiment) -> int:
-        # In the case of local runs, set the workdir to the output directory
-        experiment.cfg.workdir = experiment.output_dir
-        # Write a yaml protocol configuration to local
-        experiment.cfg.write_yaml(experiment.yaml)
-        # The -d option corresponds to the opentrons custom-data-file argument
-        # which passes the config file to the protocol.bundled_data field
-        command = f"opentrons_simulate {experiment.protocol} -d {experiment.yaml}"
-        proc = subprocess.run(command, shell=True, capture_output=True)
-        _write_log(proc.stdout, experiment.output_dir / "stdout.log")
-        _write_log(proc.stderr, experiment.output_dir / "stderr.log")
-        return proc.returncode
-
-    def run(self, experiment: Experiment) -> int:
+    def _run(self, name: str, *args: Any, **kwargs: Any) -> int:
         """Execute an experiment object.
 
         Will execute an experiment according to the paramters of the experiment.
@@ -286,6 +314,104 @@ class ExperimentManager:
         int
             Return code of experiment. 0 is success, anything other than 0 is a failure
         """
-        if self.robots:
-            return self._run_remote(experiment)
-        return self._run_local(experiment)
+        # Get a robot if one is available, or block.
+        robot = self._get_robot()
+
+        # Define the experiment to run
+        experiment = robot.setup_experiment(name, *args, **kwargs)
+
+        # Run any pre-execution steps
+        robot.pre_experiment(experiment, *args, **kwargs)
+
+        # Run the experiment
+        returncode = robot.run_experiment(experiment)
+
+        # If experiment was successful, run post-execution steps
+        robot.post_experiment(experiment, *args, **kwargs)
+
+        # Free robot for next experiment
+        robot.running = False
+
+        return returncode
+
+
+class OpenTronsRobot(Robot):
+    def __init__(self, config: OpentronsRobotConfig):
+        super().__init__(config.run_local, config.connection)
+
+        self.metadata = config.metadata
+        opentrons_exe = (
+            "opentrons_simulate" if config.run_simulation else "opentrons_execute"
+        )
+        self.exe = Path(config.opentrons_path) / opentrons_exe
+
+    def imports(self) -> None:
+        """Include imports here."""
+        raise NotImplementedError
+
+    def generate_template(
+        self,
+        protocol_path: PathLike,
+        funcs: List[Callable[..., Any]] = [],
+        template_file: str = "protocol.j2",
+    ) -> None:
+        write_template(
+            Path(protocol_path),
+            imports=self.imports,
+            config_class=self.protocol_config_class,
+            run_func=self.run,
+            metadata=self.metadata,
+            funcs=funcs,
+            template_file=template_file,
+        )
+
+    def run_local(self, experiment: Experiment) -> int:
+        # In the case of local runs, set the workdir to the output directory
+        experiment.cfg.workdir = experiment.output_dir
+        # Write a yaml protocol configuration to local
+        experiment.cfg.write_yaml(experiment.yaml)
+        # The -d option corresponds to the opentrons custom-data-file argument
+        # which passes the config file to the protocol.bundled_data field
+        command = f"opentrons_simulate {experiment.protocol} -d {experiment.yaml}"
+        proc = subprocess.run(command, shell=True, capture_output=True)
+        _write_log(proc.stdout, experiment.output_dir / "stdout.log")
+        _write_log(proc.stderr, experiment.output_dir / "stderr.log")
+        return proc.returncode
+
+    def run_remote(self, experiment: Experiment) -> int:
+        assert self.conn is not None
+
+        # /root/test1/experiment-1
+        workdir = experiment.cfg.workdir = self.conn.remote_dir / experiment.name
+        # Write a yaml protocol configuration to local
+        experiment.cfg.write_yaml(experiment.yaml)
+
+        # Adjust paths to remote workdir
+        remote_protocol = workdir / experiment.protocol.name
+        # TODO: It would be cleaner if remote_yaml was stored in workdir
+        #       but there is a bug in the opentrons code that does not
+        #       propogate the -d argument used to pass the config file
+        #       to the protocol. See protocol.py for more explanation.
+        remote_yaml = workdir.parent / experiment.yaml.name
+
+        # Transfer protocol file and configuration over to remote
+        self.conn.run(f"mkdir -p {workdir}")
+        self.conn._scp(experiment.protocol, f"{self.conn.host}:{remote_protocol}")
+        self.conn._scp(experiment.yaml, f"{self.conn.host}:{remote_yaml}")
+
+        # Execute remote experiment
+        result: Result = self.conn.run(f"{self.exe} {remote_protocol}")
+        _write_log(result.stdout, experiment.output_dir / "stdout.log")
+        _write_log(result.stderr, experiment.output_dir / "stderr.log")
+        returncode: int = result.exited
+        if returncode != 0:
+            # Return early since something went wrong
+            return returncode
+
+        # Transfer experiment results back to local
+        self.conn._transfer(experiment, workdir, remote_protocol)
+
+        # Clean up experiment on remote
+        self.conn.run(f"rm -r {workdir} {remote_yaml}")
+
+        return returncode

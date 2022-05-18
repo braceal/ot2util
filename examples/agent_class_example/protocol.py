@@ -11,10 +11,12 @@ opentrons_execute protocol.py -d config.yaml
 Modify config.yaml as needed
 """
 
-from typing import List
 from pathlib import Path
+from typing import List
+
 from opentrons import protocol_api
-from ot2util.config import ProtocolConfig, LabwareConfig, InstrumentConfig
+
+from ot2util.config import InstrumentConfig, LabwareConfig, ProtocolConfig
 
 
 class SimpleProtocolConfig(ProtocolConfig):

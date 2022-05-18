@@ -31,4 +31,6 @@
    ot2util.camera
    ot2util.config
    ot2util.experiment
+   ot2util.gym
+   ot2util.labware
 

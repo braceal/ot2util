@@ -1,4 +1,4 @@
-﻿ot2util.camera
+ot2util.camera
 ==============
 
 .. automodule:: ot2util.camera

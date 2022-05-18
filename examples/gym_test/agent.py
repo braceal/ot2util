@@ -1,0 +1,50 @@
+"""Run a grid search to test different volume values.
+
+To run it, update the grid_search_[local/remote].yaml configuration file and run:
+python grid_search_agent.py -c grid_search_[local/remote].yaml
+
+See search_results/ for a simulated output.
+"""
+
+import itertools
+from typing import List
+
+from ot2util.agent import Agent
+from ot2util.config import parse_args
+from ot2util.gym import ColorMixingGym, ColorMixingWorkflowConfig
+
+
+class GridSearchConfig(ColorMixingWorkflowConfig):
+    # Volume values to grid search
+    volume_values: List[int] = [50, 100]
+
+
+class GridSearch(Agent):
+    def __init__(self, config: GridSearchConfig) -> None:
+        # Creates self.config, self.robot_pool fields
+        super().__init__(config)
+
+        self.gym = ColorMixingGym(config)
+
+        # Number of unique experiments to run
+        self.num_experiments = len(str(len(self.config.volume_values)))
+
+    def run(self) -> None:
+
+        # TODO: Assuming volumes are constant for now
+        volumes = [10, 10, 10]
+        # TODO: Make data structure for colors?
+        sourcecolors = ["A1", "A2", "A3", "B1", "B2"]
+        # Loop over color combinations
+        for itr, colors in enumerate(itertools.combinations(sourcecolors, 3)):
+            name = f"experiment-{itr:0{self.num_experiments}d}"
+            self.gym.action(name, colors, volumes)
+
+
+if __name__ == "__main__":
+    args = parse_args()
+    cfg = GridSearchConfig.from_yaml(args.config)
+    gridsearch = GridSearch(cfg)
+    print("Running gridsearch")
+    gridsearch.run()
+    print("Done running gridsearch")

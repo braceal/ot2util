@@ -1,0 +1,18 @@
+robots:
+  - run_local: true
+    run_simulation: true
+    opentrons_path: /Users/abrace/src/ot2-examples/ot2/bin
+    wellplate:
+      name: corning_96_wellplate_360ul_flat
+      location: '1'
+    tiprack:
+      name: opentrons_96_tiprack_20ul
+      location: '8'
+    pipette:
+      name: p20_single_gen2
+      mount: right
+
+output_dir: search_results
+volume_values:
+- 5
+- 10

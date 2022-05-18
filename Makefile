@@ -1,15 +1,19 @@
 .DEFAULT_GOAL := all
-isort = isort examples
-black = black --target-version py37 examples ot2util
+isort = isort ot2util examples test
+black = black --target-version py37 ot2util examples test
 
 .PHONY: format
 format:
+	$(isort)
 	$(black)
 
 .PHONY: lint
 lint:
-	flake8 examples/ ot2util/
 	$(black) --check --diff
+	flake8 ot2util/ examples/ test/
+	#pylint ot2util/ #examples/ test/
+	#pydocstyle deepdrivemd/
+
 
 .PHONY: mypy
 mypy:

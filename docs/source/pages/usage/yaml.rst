@@ -8,9 +8,9 @@ Running a Simulation Agent
 ******************************
 
 Things needed: 
-    * An output directory (part of :py:class:`Experiment<ot2util.config.ExperimentConfig>`)
-    * A protocol file and accompanying configuration to run (part of :py:class:`Experiment<ot2util.config.ExperimentConfig>`)
-    * Flag to run the sumulation :code:`run_simulation: True` (part of :py:class:`Experiment<ot2util.config.ExperimentConfig>`)
+    * An output directory (part of :py:class:`Experiment<ot2util.config.WorkflowConfig>`)
+    * A protocol file and accompanying configuration to run (part of :py:class:`Experiment<ot2util.config.WorkflowConfig>`)
+    * Flag to run the sumulation :code:`run_simulation: True` (part of :py:class:`Experiment<ot2util.config.WorkflowConfig>`)
 
 These values should be present in any simulation you run. Adding information from other classes could result in exceptions. 
 An example of a local grid search simulation is shown below. 
@@ -26,10 +26,10 @@ Running an Agent on OT2
 *****************************
 
 Things Needed: 
-    * List of robots (see :py:class:`~ot2util.config.OpentronsConfig`)
-    * An output directory (part of :py:class:`Experiment<ot2util.config.ExperimentConfig>`)
-    * A protocol file and accompanying configuration to run (part of :py:class:`Experiment<ot2util.config.ExperimentConfig>`)
-    * Flag to run the sumulation :code:`run_simulation: False` (part of :py:class:`Experiment<ot2util.config.ExperimentConfig>`)
+    * List of robots (see :py:class:`~ot2util.config.RobotConnectionConfig`)
+    * An output directory (part of :py:class:`Experiment<ot2util.config.WorkflowConfig>`)
+    * A protocol file and accompanying configuration to run (part of :py:class:`Experiment<ot2util.config.WorkflowConfig>`)
+    * Flag to run the sumulation :code:`run_simulation: False` (part of :py:class:`Experiment<ot2util.config.WorkflowConfig>`)
 
 Other values, such as :code:`volume_values` above, will be available for you to use in your agent, but are not 
 required by the ot2util package. You can include any valid yaml here and it will be accessible in your aglorithm. 

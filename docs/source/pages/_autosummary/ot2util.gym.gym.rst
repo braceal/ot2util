@@ -1,7 +1,7 @@
-ot2util.agent
-=================
+ot2util.gym.gym
+===============
 
-.. automodule:: ot2util.agent
+.. automodule:: ot2util.gym.gym
 
    
    
@@ -17,7 +17,7 @@ ot2util.agent
 
    .. autosummary::
    
-      Agent
+      Gym
    
    
 

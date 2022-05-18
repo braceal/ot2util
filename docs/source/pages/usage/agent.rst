@@ -6,7 +6,7 @@ As of right now, implementing your own agent should be a straightforward process
 Steps: 
     1. Create a config class like the one shown below::
 
-        class GridSearchConfig(ExperimentConfig):
+        class GridSearchConfig(WorkflowConfig):
             # Path to protocol script containing run function
             protocol: Path = ""
             # Base configuration options for the protocol

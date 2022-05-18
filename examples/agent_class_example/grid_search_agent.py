@@ -6,15 +6,17 @@ python grid_search_agent.py -c grid_search_[local/remote].yaml
 See search_results/ for a simulated output.
 """
 
-from typing import List
 from pathlib import Path
-from ot2util.agent import Agent
-from ot2util.experiment import Experiment
-from ot2util.config import parse_args, ExperimentConfig
+from typing import List
+
 from protocol import SimpleProtocolConfig
 
+from ot2util.agent import Agent
+from ot2util.config import WorkflowConfig, parse_args
+from ot2util.experiment import Experiment
 
-class GridSearchConfig(ExperimentConfig):
+
+class GridSearchConfig(WorkflowConfig):
     # Path to protocol script containing run function
     protocol: Path = ""
     # Base configuration options for the protocol
@@ -25,7 +27,7 @@ class GridSearchConfig(ExperimentConfig):
 
 class GridSearch(Agent):
     def __init__(self, config: GridSearchConfig) -> None:
-        # Creates self.config, self.experiment_manager fields
+        # Creates self.config, self.robot_pool fields
         super().__init__(config)
 
         # Number of unique experiments to run
