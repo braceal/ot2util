@@ -12,7 +12,7 @@ lint:
 	$(black) --check --diff
 	flake8 ot2util/ examples/ test/
 	#pylint ot2util/ #examples/ test/
-	#pydocstyle deepdrivemd/
+	pydocstyle ot2util/
 
 
 .PHONY: mypy

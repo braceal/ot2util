@@ -25,6 +25,6 @@ Steps:
 
     An example is shown below: 
 
-    .. literalinclude:: ../../../../examples/agent_class_example/grid_search_agent.py
+    .. literalinclude:: ../../../../examples/gym_test/agent.py
         :linenos:
         :language: python

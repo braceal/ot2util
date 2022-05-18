@@ -1,7 +1,7 @@
-ot2util.gym.color\_mixing
+ot2util.workflow.workflow
 =========================
 
-.. automodule:: ot2util.gym.color_mixing
+.. automodule:: ot2util.workflow.workflow
 
    
    
@@ -17,8 +17,7 @@ ot2util.gym.color\_mixing
 
    .. autosummary::
    
-      ColorMixingGym
-      ColorMixingRobot
+      Workflow
    
    
 
