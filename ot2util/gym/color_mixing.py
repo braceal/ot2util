@@ -109,9 +109,6 @@ class ColorMixingRobot(OpenTronsRobot):
         from ot2util.config import LabwareConfig  # noqa
         from ot2util.config import ProtocolConfig  # noqa
 
-    # TODO: As an alternative to implementing the run function
-    #       you can use the protopiler interface to implement the
-    #       run function.
     def run(protocol: ProtocolContext) -> None:  # type: ignore[misc]
 
         # Load the protocol configuration

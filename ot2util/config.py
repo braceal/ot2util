@@ -60,7 +60,6 @@ class BaseSettings(_BaseSettings):
         # As a quick fix, we hard code a path to write config files to.
         remote_dir = Path("/root/test1")
         return cls.from_yaml(remote_dir / "config.yaml")  # type: ignore
-        # TODO: This needs testing!
 
 
 class LabwareConfig(BaseSettings):
