@@ -153,6 +153,7 @@ class ColorMixingGym(Gym):
             name=name, source_wells=colors, source_volumes=volumes
         )
         self.futures.add(future)
+        # TODO: Implement automatic batching
 
         # experiment = future.result()
         # logger.info(f"Experiment {name} finished with returncode: {returncode}")
