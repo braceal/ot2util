@@ -63,7 +63,6 @@ def to_template(
 
 def write_template(filename: Path, *args: Any, **kwargs: Any) -> None:
     source_code = to_template(*args, **kwargs)
-    # black.format_file_contents(txt, fast=False, mode=black.FileMode())
     source_code = black.format_str(source_code, mode=black.FileMode(line_length=100))
     with open(filename, "w") as f:
         f.write(source_code)
