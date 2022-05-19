@@ -35,10 +35,6 @@ class GridSearch(Agent):
         for itr, colors in enumerate(itertools.combinations(sourcecolors, 3)):
             name = f"experiment-{itr:03d}"
             self.workflow.action(name, colors, volumes)
-            if (itr + 1) % 2 == 0:
-                experiments = self.workflow.wait()
-                for experiment in experiments:
-                    logger.info(experiment)
 
 
 if __name__ == "__main__":

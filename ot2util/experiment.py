@@ -7,7 +7,7 @@ import subprocess
 import time
 from concurrent.futures import Future, wait
 from pathlib import Path
-from typing import Any, Callable, List, Optional, Union
+from typing import Any, Callable, List, Optional, Union, Set
 
 import black
 import pebble
@@ -269,32 +269,50 @@ class RobotPool:
     """Class to manage experiments to be run. Will handle distributing
     protocols and running them on any/all OT2's available."""
 
-    def __init__(self, robots: List[Robot]) -> None:
+    def __init__(self, robots: List[Robot], synchronized: bool = True) -> None:
         """Initialize the experiment manager with required environmental information.
 
         Parameters
         ----------
         robots : List[Robots]
             List of robots available.
+        synchronized: bool
+            If True, will block the calling thread if submitted jobs
+            exceed the number of available robots (defaults to True).
         """
         self.robots = robots
+        self.synchronized = synchronized
+        self.futures: Set[Future[Experiment]] = set()
         self.pool = pebble.ThreadPool(max_workers=len(self.robots))
 
     def __del__(self) -> None:
         self.pool.close()
         self.pool.join()
 
+    def _block_on_batch(self) -> None:
+        """Wait for running experiments to finish if there are
+        no more available robots."""
+        if len(self.futures) == len(self.robots):
+            for future in self.futures:
+                future.result()
+            self.futures = set()
+
     def submit(self, name: str, *args: Any, **kwargs: Any) -> Future[Experiment]:
-        fut: Future[Experiment] = self.pool.schedule(
+        if self.synchronized:
+            self._block_on_batch()
+
+        future: Future[Experiment] = self.pool.schedule(
             self._run, args=(name, *args), kwargs=kwargs
         )
+        self.futures.add(future)
+
         if len(self.robots) == 1:
             # wait returns a named tuple of futures wait().done is
             # a set of completed futures and since we only have a single
             # thread in this case, it will have one element so we pop it
             # from the set and return the Future.
-            return wait([fut]).done.pop()
-        return fut
+            return wait([future]).done.pop()
+        return future
 
     @pebble.synchronized  # type: ignore[misc]
     def _get_robot(self) -> Robot:
