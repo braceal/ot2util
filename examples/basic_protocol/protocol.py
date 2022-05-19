@@ -70,8 +70,8 @@ def run(protocol: protocol_api.ProtocolContext):
 
     # https://github.com/Opentrons/opentrons/blob/edge/api/src/opentrons/util/entrypoint_util.py#L59
     # protocol.bundled_data["config.yaml"] will contain the raw bytes of the config file
-    # TODO: There is a bug in the opentrons code which does not pass this parameter
-    #       correctly during opentrons_execute commands.
+    # There is a bug in the opentrons code which does not pass this parameter
+    # correctly during opentrons_execute commands.
     if "config.yaml" in protocol.bundled_data:
         cfg = SimpleProtocolConfig.from_bytes(protocol.bundled_data["config.yaml"])
     else:

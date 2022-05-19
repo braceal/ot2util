@@ -1,3 +1,5 @@
+"""Utility for automatically installing the package software
+on many OT-2's at the same time."""
 from typing import List
 
 from pebble import ProcessPool

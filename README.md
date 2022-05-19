@@ -71,6 +71,8 @@ To make the documentation with readthedocs:
 
 ```
 cd docs/
+rm -r source/pages/_autosummary
+make clean
 make html
 ```
 
@@ -98,3 +100,5 @@ rm /Users/abrace/.ssh/known_hosts
 
 2. If the specific OT2 is not in your known hosts file (locally) then fabric will 
 block until you type yes which can throw off the execution when were working with threads.
+
+3. Due to a bug in the OT2 interface, please leave the `remote_dir` option set as `/root/test1`.

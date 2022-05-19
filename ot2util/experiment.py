@@ -383,7 +383,7 @@ class OpenTronsRobot(Robot):
         """Include imports here."""
         raise NotImplementedError
 
-    def generate_template(
+    def write_protocol(
         self,
         protocol_path: PathLike,
         funcs: List[Callable[..., Any]] = [],

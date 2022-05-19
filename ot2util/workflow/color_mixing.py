@@ -90,9 +90,7 @@ class ColorMixingRobot(OpenTronsRobot):
 
         # Create new experiment
         experiment = Experiment(name, self.output_dir, config)
-
-        # TODO: Change function name to generate_protocol
-        self.generate_template(experiment.protocol)
+        self.write_protocol(experiment.protocol)
         return experiment
 
     def post_experiment(
