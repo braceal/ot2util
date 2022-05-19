@@ -1,7 +1,7 @@
 """Run a grid search to test different volume values.
 
-To run it, update the grid_search_[local/remote].yaml configuration file and run:
-python grid_search_agent.py -c grid_search_[local/remote].yaml
+To run it, update the config_[local/remote].yaml configuration file and run:
+python agent.py -c config_[local/remote].yaml
 
 See search_results/ for a simulated output.
 """
