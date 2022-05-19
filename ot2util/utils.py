@@ -42,8 +42,6 @@ def configure_ot2s(
                 function=configure_ot2,
                 args=(connection, update_package, update_calibration, commands),
             )
-        pool.close()
-        pool.join()
 
 
 class OpentronsInstallationConfig(BaseSettings):
