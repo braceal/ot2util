@@ -1,11 +1,18 @@
 """Utility for automatically installing the package software
 on many OT-2's at the same time."""
-from typing import List
+from pathlib import Path
+from typing import List, Union
 
 from pebble import ProcessPool
 
-from ot2util.config import BaseSettings, RobotConnectionConfig, parse_args
+from ot2util.config import BaseSettings, PathLike, RobotConnectionConfig, parse_args
 from ot2util.experiment import RobotConnection
+
+
+def write_file(contents: Union[str, bytes], path: PathLike) -> None:
+    mode = "wb" if isinstance(contents, bytes) else "w"
+    with open(path, mode) as f:
+        f.write(contents)
 
 
 def configure_ot2(
@@ -14,22 +21,34 @@ def configure_ot2(
     update_package: bool = True,
     update_calibration: bool = False,
     commands: List[str] = [],
+    log_dir: Path = Path("."),
 ) -> None:
     """Configure a single OT-2 remotely."""
     conn = RobotConnection(**connection.dict())
+    stdout, stderr = [], []
+
+    def _run(command: str) -> None:
+        result = conn.run(command)
+        if result.return_code != 0:
+            raise ValueError(f"{command} failed on connection: {conn}")
+        stdout.append(result.stdout)
+        stderr.append(result.stderr)
 
     if update_package:
-        conn.run("rm -rf ot2util/")
-        conn.run(f"git clone -b {branch} https://github.com/braceal/ot2util.git")
-        conn.run("pip install -r ot2util/requirements/ot2-minimal.txt")
-        conn.run("pip install ot2util/")
+        _run("rm -rf ot2util/")
+        _run(f"git clone -b {branch} https://github.com/braceal/ot2util.git")
+        _run("pip install -r ot2util/requirements/ot2-minimal.txt")
+        _run("pip install ot2util/")
 
     if update_calibration:
-        conn.run("mv .opentrons/ .opentrons-back")
-        conn.run("cp -r /var/data/* ~/.opentrons/")
+        _run("mv .opentrons/ .opentrons-back")
+        _run("cp -r /var/data/* ~/.opentrons/")
 
     for command in commands:
-        conn.run(command)
+        _run(command)
+
+    write_file("\n".join(stdout), (log_dir / str(conn)).with_suffix(".stdout"))
+    write_file("\n".join(stderr), (log_dir / str(conn)).with_suffix(".stderr"))
 
 
 def configure_ot2s(
@@ -38,13 +57,22 @@ def configure_ot2s(
     update_package: bool = True,
     update_calibration: bool = False,
     commands: List[str] = [],
+    log_dir: Path = Path("."),
 ) -> None:
     """Configure many OT-2s remotely."""
+    log_dir.mkdir(exist_ok=True)
     with ProcessPool(max_workers=len(connections)) as pool:
         for connection in connections:
             pool.schedule(
                 function=configure_ot2,
-                args=(connection, branch, update_package, update_calibration, commands),
+                args=(
+                    connection,
+                    branch,
+                    update_package,
+                    update_calibration,
+                    commands,
+                    log_dir,
+                ),
             )
 
 
@@ -61,6 +89,7 @@ class OpentronsInstallationConfig(BaseSettings):
     """Whether or not to update the calibration files."""
     commands: List[str] = []
     """List of extra commands to run."""
+    log_dir: Path = Path(".")
 
 
 if __name__ == "__main__":
