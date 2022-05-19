@@ -7,7 +7,7 @@ import subprocess
 import time
 from concurrent.futures import Future, wait
 from pathlib import Path
-from typing import Any, Callable, List, Optional, Union, Set
+from typing import Any, Callable, List, Optional, Set, Union
 
 import black
 import pebble

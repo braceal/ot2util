@@ -151,11 +151,12 @@ class ColorMixingWorkflow(Workflow):
         #       Suppose for now they are location names e.g. "A1"
 
         logger.info(f"Launching experiment: {name}")
-        future = self.robot_pool.submit(
-            name=name, source_wells=colors, source_volumes=volumes
-        )
+        self.robot_pool.submit(name=name, source_wells=colors, source_volumes=volumes)
+        # The below code will be blocking on a single experiment
         # experiment = future.result()
-        # logger.info(f"Experiment {name} finished with returncode: {returncode}")
+        # logger.info(
+        #     f"Experiment {name} finished with returncode: {experiment.returncode}"
+        # )
 
     def state(self) -> None:  # noqa
         # TODO: Retrieve camera values
