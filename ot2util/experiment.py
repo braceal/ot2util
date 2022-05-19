@@ -285,7 +285,9 @@ class RobotPool:
         self.pool.join()
 
     def submit(self, name: str, *args: Any, **kwargs: Any) -> Future[Experiment]:
-        fut = self.pool.schedule(self._run, args=(name, *args), kwargs=kwargs)
+        fut: Future[Experiment] = self.pool.schedule(
+            self._run, args=(name, *args), kwargs=kwargs
+        )
         if len(self.robots) == 1:
             # wait returns a named tuple of futures wait().done is
             # a set of completed futures and since we only have a single
@@ -294,7 +296,7 @@ class RobotPool:
             return wait([fut]).done.pop()
         return fut
 
-    @pebble.synchronized
+    @pebble.synchronized  # type: ignore[misc]
     def _get_robot(self) -> Robot:
         while True:
             for robot in self.robots:
@@ -324,7 +326,7 @@ class RobotPool:
         robot = self._get_robot()
 
         # Define the experiment to run
-        experiment = robot.setup_experiment(name, *args, **kwargs)
+        experiment: Experiment = robot.setup_experiment(name, *args, **kwargs)
 
         # Run any pre-execution steps
         robot.pre_experiment(experiment, *args, **kwargs)

@@ -11,7 +11,7 @@ class Workflow:
 
     def __init__(self) -> None:
         """Initialize the workflow base class."""
-        self.futures: Set[Future[int]] = set()
+        self.futures: Set[Future[Experiment]] = set()
 
     def wait(self) -> List[Experiment]:
         """Wait for running experiments to finish.
