@@ -16,6 +16,7 @@ def configure_ot2(
     conn = RobotConnection(**connection.dict())
 
     if update_package:
+        conn.run("rm -rf ot2util/")
         conn.run("git clone https://github.com/braceal/ot2util.git")
         conn.run("pip install -r ot2util/requirements/ot2-minimal.txt")
         conn.run("pip install ot2util/")
