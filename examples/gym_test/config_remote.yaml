@@ -36,6 +36,3 @@ robots:
       location: '3'
 
 output_dir: search_results
-volume_values:
-- 5
-- 10
