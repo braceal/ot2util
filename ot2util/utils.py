@@ -8,6 +8,7 @@ from ot2util.experiment import RobotConnection
 
 def configure_ot2(
     connection: RobotConnectionConfig,
+    branch: str = "main",
     update_package: bool = True,
     update_calibration: bool = False,
     commands: List[str] = [],
@@ -17,7 +18,7 @@ def configure_ot2(
 
     if update_package:
         conn.run("rm -rf ot2util/")
-        conn.run("git clone https://github.com/braceal/ot2util.git")
+        conn.run(f"git clone -b {branch} https://github.com/braceal/ot2util.git")
         conn.run("pip install -r ot2util/requirements/ot2-minimal.txt")
         conn.run("pip install ot2util/")
 
@@ -31,6 +32,7 @@ def configure_ot2(
 
 def configure_ot2s(
     connections: List[RobotConnectionConfig],
+    branch: str = "main",
     update_package: bool = True,
     update_calibration: bool = False,
     commands: List[str] = [],
@@ -40,7 +42,7 @@ def configure_ot2s(
         for connection in connections:
             pool.schedule(
                 function=configure_ot2,
-                args=(connection, update_package, update_calibration, commands),
+                args=(connection, branch, update_package, update_calibration, commands),
             )
 
 
@@ -49,6 +51,8 @@ class OpentronsInstallationConfig(BaseSettings):
 
     connections: List[RobotConnectionConfig] = []
     """Configuration for connecting to the robot via ssh."""
+    branch: str = "main"
+    """Specific branch of repository to install (defaults to main)."""
     update_package: bool = True
     """Whether or not to update the ot2util package."""
     update_calibration: bool = False
@@ -59,5 +63,5 @@ class OpentronsInstallationConfig(BaseSettings):
 
 if __name__ == "__main__":
     args = parse_args()
-    cfg = OpentronsInstallationConfig.from_yaml(args.config)
-    configure_ot2s(**cfg.dict())
+    config = OpentronsInstallationConfig.from_yaml(args.config)
+    configure_ot2s(**config.dict())
