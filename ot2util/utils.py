@@ -30,7 +30,8 @@ def configure_ot2(
     def _run(command: str) -> None:
         result = conn.run(command)
         if result.return_code != 0:
-            raise ValueError(f"{command} failed on connection: {conn}")
+            logs = f"{result.stdout}\n{result.stderr}"
+            raise ValueError(f"Error on connection {conn}\n{command}\n{logs}")
         stdout.append(result.stdout)
         stderr.append(result.stderr)
 
@@ -47,8 +48,8 @@ def configure_ot2(
     for command in commands:
         _run(command)
 
-    write_file("\n".join(stdout), (log_dir / str(conn)).with_suffix(".stdout"))
-    write_file("\n".join(stderr), (log_dir / str(conn)).with_suffix(".stderr"))
+    write_file("\n".join(stdout), log_dir / f"{conn}.stdout")
+    write_file("\n".join(stderr), log_dir / f"{conn}.stderr")
 
 
 def configure_ot2s(
