@@ -1,4 +1,5 @@
 import time
+import numpy as np
 from pathlib import Path
 
 import cv2
@@ -15,6 +16,8 @@ def test_get_colors():
     colors = get_colors(img)  # noqa
     e = time.time()
     print(e - s)
+    print(colors[1]["A1"])
+    assert np.array_equal(colors[1]["A1"], [161, 163, 215])
     # from pprint import pprint
     # pprint(colors)
     # print(colors[1]['A2'])

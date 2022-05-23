@@ -4,6 +4,7 @@ pyyaml
 Fabric
 paramiko==2.8
 opencv-contrib-python
+numpy
 Jinja2
 black
 pebble

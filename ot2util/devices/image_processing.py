@@ -10,11 +10,30 @@ DEBUG = 0
 
 
 def _show_image(img: cv2.Mat) -> None:
+    """Convenience function to display an image in a window.
+
+    Parameters
+    ----------
+    img : cv2.Mat
+        Input image to display.
+    """
     cv2.imshow("", img)
     cv2.waitKey(0)
 
 
 def _any2gray(img: cv2.Mat) -> cv2.Mat:
+    """Converts an image from gray or BGR to grayscale.
+
+    Parameters
+    ----------
+    img : cv2.Mat
+        Input image.
+
+    Returns
+    -------
+    cv2.Mat
+        Grayscale image.
+    """
     if len(img.shape) == 3:
         return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     return img
@@ -26,6 +45,25 @@ def _rotate(
     center: Optional[Tuple[float, float]] = None,
     scale: float = 1.0,
 ) -> cv2.Mat:
+    """Rotates an input image by a given angle in degrees about a center point.
+
+    Parameters
+    ----------
+    img : cv2.Mat
+        Input image.
+    angle : float
+        Rotation angle in degrees. Positive values mean counter-clockwise
+        rotation (the coordinate origin is assumed to be the top-left corner).
+    center : Optional[Tuple[float, float]], optional
+        Center of the rotation in the source image, by default None
+    scale : float, optional
+        Isotropic scale factor, by default 1.0
+
+    Returns
+    -------
+    cv2.Mat
+        Transformed image.
+    """
     (h, w) = img.shape[:2]
 
     if center is None:
@@ -38,6 +76,18 @@ def _rotate(
 
 
 def _to_homogeneous(pts: "npt.NDArray[np.int64]") -> "npt.NDArray[np.float64]":
+    """Converts points to homogeneous coordinates with w=1.
+
+    Parameters
+    ----------
+    pts : npt.NDArray[np.int64]
+        Input non-homogeneous points.
+
+    Returns
+    -------
+    npt.NDArray[np.float64]
+        Output homogeneous points.
+    """
     *front, d = pts.shape
     points = np.ones((*front, d + 1))
     points[..., :-1] = pts
@@ -45,12 +95,36 @@ def _to_homogeneous(pts: "npt.NDArray[np.int64]") -> "npt.NDArray[np.float64]":
 
 
 def _homogenize(pts: "npt.NDArray[np.float64]") -> "npt.NDArray[np.float64]":
+    """Normalizes homogeneous points to have w=1.
+
+    Parameters
+    ----------
+    pts : npt.NDArray[np.float64]
+        Input homogeneous points.
+
+    Returns
+    -------
+    npt.NDArray[np.float64]
+        Output homogeneous points.
+    """
     *front, d = pts.shape
     pts = pts / pts[..., -1].reshape(*front, 1)
     return pts
 
 
 def _from_homogeneous(pts: "npt.NDArray[np.float64]") -> "npt.NDArray[np.float64]":
+    """Converts points from homogeneous coordinates.
+
+    Parameters
+    ----------
+    pts : npt.NDArray[np.float64]
+        Input homogeneous points.
+
+    Returns
+    -------
+    npt.NDArray[np.float64]
+        Output non-homogeneous points.
+    """
     return _homogenize(pts)[..., :-1]
 
 
@@ -65,6 +139,26 @@ def _find_fiducials(
     ],
     "npt.NDArray[np.int32]",
 ]:
+    """Finds the corners and ids of fiducial markers in the input image.
+
+    Parameters
+    ----------
+    img : cv2.Mat
+        Input image.
+
+    Returns
+    -------
+    Tuple[
+        "npt.NDArray[np.float32]",
+        "npt.NDArray[np.float32]",
+        "npt.NDArray[np.float32]",
+        "npt.NDArray[np.float32]",
+    ]
+        Corner coordinates of detected fiducials.
+
+    "npt.NDArray[np.int32]"
+        IDs of detected fiducials.
+    """
     aruco_dict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_250)
     parameters = cv2.aruco.DetectorParameters_create()
     corners, ids, _ = cv2.aruco.detectMarkers(
@@ -83,6 +177,22 @@ def _draw_fiducials(
     ],
     ids: "npt.NDArray[np.int32]",
 ) -> None:
+    """Draws fiducial bounds, axes, and IDs on the input image.
+
+    Parameters
+    ----------
+    img : cv2.Mat
+        Input image.
+    corners : Tuple[
+        npt.NDArray[np.float32],
+        npt.NDArray[np.float32],
+        npt.NDArray[np.float32],
+        npt.NDArray[np.float32]
+    ]
+        Corner coordinates of detected fiducials.
+    ids : npt.NDArray[np.int32]
+        IDs of detected fiducials.
+    """
     if len(corners) <= 0:
         return None
 
@@ -103,11 +213,35 @@ def _draw_fiducials(
 
 
 def _plate_size(p: "npt.NDArray[np.int64]") -> np.float64:
+    """Estimate how large a plate is by corner to corner distance.
+
+    Parameters
+    ----------
+    p : npt.NDArray[np.int64]
+        Corners of a plate.
+
+    Returns
+    -------
+    np.float64
+        Distance between the corners.
+    """
     # Get a rough idea of how large a plate is (corner2corner)
     return np.linalg.norm([[p[0] - p[2]], [p[1] - p[3]]])
 
 
 def _orient(img: cv2.Mat) -> "npt.NDArray[np.int64]":
+    """Finds the corners in image coordinate space of the largest fiducial.
+
+    Parameters
+    ----------
+    img : cv2.Mat
+        Input image.
+
+    Returns
+    -------
+    npt.NDArray[np.int64]
+        Fiducial corners.
+    """
     # Find all of the fiducials
     corners, ids = _find_fiducials(img)
 
@@ -136,6 +270,23 @@ def _orient(img: cv2.Mat) -> "npt.NDArray[np.int64]":
 def _refine_angle(
     img: cv2.Mat, orientation: "npt.NDArray[np.int64]"
 ) -> Tuple[cv2.Mat, "npt.NDArray[np.int64]"]:
+    """Rotates the image to align the fiducial to the image axes, and
+    returns updated orientation.
+
+    Parameters
+    ----------
+    img : cv2.Mat
+        Input image.
+    orientation : "npt.NDArray[np.int64]"
+        Fiducial corners.
+
+    Returns
+    -------
+    cv2.Mat
+        Output rotated image.
+    orientation : "npt.NDArray[np.int64]"
+        Updated fiducial corners in output image.
+    """
     # Find the angle of the fiducial
     f0x = orientation[3, 0]
     f0y = orientation[3, 1]
@@ -164,6 +315,20 @@ def _refine_angle(
 def _estimate_plates(
     img: cv2.Mat, orientation: "npt.NDArray[np.int64]"
 ) -> "npt.NDArray[np.int64]":
+    """Estimate the plate positions in the image from a fiducial.
+
+    Parameters
+    ----------
+    img : cv2.Mat
+        Input image. (Only used for debug drawings).
+    orientation : npt.NDArray[np.int64]
+        Fiducial corners.
+
+    Returns
+    -------
+    npt.NDArray[np.int64]
+        Array of bottom-left and top-right corners of each plate.
+    """
     # Coordinates from the fiducial
     f0x = orientation[3, 0]
     f0y = orientation[3, 1]
@@ -232,6 +397,20 @@ def _estimate_plates(
 
 
 def _errf(inp: List[np.float64], pts: "npt.NDArray[np.int64]") -> np.float64:
+    """Creates a grid from the input offset and size values, and measures point alignment.
+
+    Parameters
+    ----------
+    inp : List[np.float64]
+        Offsets for X and Y axes, and X, Y distance between gridlines.
+    pts : npt.NDArray[np.int64]
+        Points to align to the grid.
+
+    Returns
+    -------
+    np.float64
+        Average error from each point to the nearest grid intersections.
+    """
     x0, y0, xs, ys = inp
 
     # Transformation matrix from pixel space to 'plate' space
@@ -266,6 +445,22 @@ def _optimize(
     est: np.float64,
     pts: "npt.NDArray[np.int64]",
 ) -> Tuple[np.float64, np.float64, np.float64, np.float64]:
+    """Optimizes the parameters of the grid for the given points.
+
+    Parameters
+    ----------
+    f : Callable[[List[np.float64], &quot;npt.NDArray[np.int64]&quot;], np.float64]
+        Error function.
+    est : np.float64
+        Estimated grid size.
+    pts : npt.NDArray[np.int64]
+        Points to align to the grid.
+
+    Returns
+    -------
+    Tuple[np.float64, np.float64, np.float64, np.float64]
+        Optimal grid parameters.
+    """
 
     x0_best = None
     y0_best = None
@@ -295,6 +490,20 @@ def _optimize(
 def _refine_plate(
     img: cv2.Mat, plate: "npt.NDArray[np.int64]"
 ) -> "npt.NDArray[np.float64]":
+    """Finds the plate in the input image and narrows down the exact locations of the wells.
+
+    Parameters
+    ----------
+    img : cv2.Mat
+        Input image.
+    plate : npt.NDArray[np.int64]
+        Corners of the plate to analyze.
+
+    Returns
+    -------
+    npt.NDArray[np.float64]
+        Transformation matrix mapping from plate coordinates to pixel coordinates.
+    """
     # Find all of the circles in the image near the estimated well size
     radius = _plate_size(plate) / 55
     blur = cv2.GaussianBlur(img, (5, 5), 0.75)
@@ -396,6 +605,20 @@ def _refine_plate(
 def _find_wells(
     img: cv2.Mat, plateM: "npt.NDArray[np.float64]"
 ) -> Dict[str, "npt.NDArray[np.int64]"]:
+    """Returns the position of each named well in the image.
+
+    Parameters
+    ----------
+    img : cv2.Mat
+        Input image. (Only used for debug drawings).
+    plateM : "npt.NDArray[np.float64]"
+        Transformation matrix mapping from plate coordinates to pixel coordinates.
+
+    Returns
+    -------
+    Dict[str, "npt.NDArray[np.int64]"]
+        Mapping from well names to pixel locations.
+    """
     if plateM is None:
         return []
 
@@ -428,12 +651,40 @@ def _find_wells(
 def _get_well_color(
     img: cv2.Mat, well: "npt.NDArray[np.int64]"
 ) -> "npt.NDArray[np.int64]":
+    """Returns the color of the specified well.
+
+    Parameters
+    ----------
+    img : cv2.Mat
+        Input image.
+    well : npt.NDArray[np.int64]
+        Pixel coordinates of the center of the well.
+
+    Returns
+    -------
+    npt.NDArray[np.int64]
+        BGR color of the well.
+    """
     # Get the color at a position
     color = [a.item() for a in img[well[1], well[0]]]
     return np.array(color)
 
 
 def _proximity_to_center(img: cv2.Mat, plate: "npt.NDArray[np.int64]") -> np.float64:
+    """Finds the distance from the center of the plate to the center of the image.
+
+    Parameters
+    ----------
+    img : cv2.Mat
+        Input image.
+    plate : npt.NDArray[np.int64]
+        Corners of the plate.
+
+    Returns
+    -------
+    np.float64
+        Distance of the plate from the center of the image.
+    """
     # Find plate center
     px = (plate[0] + plate[2]) / 2
     py = (plate[1] + plate[3]) / 2
@@ -450,7 +701,9 @@ def _proximity_to_center(img: cv2.Mat, plate: "npt.NDArray[np.int64]") -> np.flo
 
 
 def get_colors(img: cv2.Mat) -> Dict[int, Dict[str, "npt.NDArray[np.int64]"]]:
-    """Process :code:`img` matrix to get RGB colors.
+    """Process :code:`img` matrix to get BGR colors.
+
+    Analyzes an image for plates and determines the colors of all wells in any discovered plates.
 
     Parameters
     ----------
@@ -463,6 +716,14 @@ def get_colors(img: cv2.Mat) -> Dict[int, Dict[str, "npt.NDArray[np.int64]"]]:
         Dictionary mapping the well location, e.g. 1, on the opentrons
         to another dictionary which maps the well name, e.g. "A1", to
         an integer numpy array representing the colors in BGR order.
+
+    Examples
+    --------
+    >>> img = cv2.imread("sample.png") # Load image
+    >>> img = match_size(img, (1280, 1920)) # Crop image
+    >>> colors = get_colors(img) # Analyze image for colors
+    >>> print(colors[1]["A1"])
+    [161 163 215]
     """
     # TODO: Conisider making an RGB tuple type and returning that instead.
     # Find the orientation of the image
@@ -502,19 +763,23 @@ def get_colors(img: cv2.Mat) -> Dict[int, Dict[str, "npt.NDArray[np.int64]"]]:
 
 
 def match_size(img: cv2.Mat, shape: Tuple[int, int]) -> cv2.Mat:
-    """_summary_
+    """Resizes and crops the input image to match the desired resolution.
 
     Parameters
     ----------
     img : cv2.Mat
-        _description_
+        Input image.
     shape : Tuple[int, int]
-        _description_
+        The desired resolution.
 
     Returns
     -------
     cv2.Mat
-        _description_
+        Output image that has the specified shape.
+
+    Note
+    ----
+    Only used for testing purposes.
     """
     min_img = min(img.shape[:2])
     max_img = max(img.shape[:2])
