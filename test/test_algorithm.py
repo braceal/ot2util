@@ -4,5 +4,5 @@ def test_agent_init():
 
     cfg = WorkflowConfig()
     agent = Agent(cfg)
-    correct = "Agent(robots=[] output_dir=PosixPath('.') run_simulation=True)"
+    correct = "Agent(robots=[] output_dir=PosixPath('.'))"
     assert str(agent) == correct

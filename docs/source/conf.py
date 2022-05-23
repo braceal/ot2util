@@ -21,7 +21,7 @@ import ot2util  # noqa
 # -- Project information -----------------------------------------------------
 
 project = "ot2util"
-author = "Alexander Brace, Yuanjian Liu, Kyle Hippe"
+author = "Alexander Brace, Yuanjian Liu, Kyle Hippe, Rory Butler"
 now = datetime.datetime.now()
 copyright = f"2022-{now.year}, {author}"
 
@@ -77,7 +77,7 @@ templates_path = ["_templates"]
 exclude_patterns = []
 
 # List of imports to mock when building the documentation.
-autodoc_mock_imports = ["cv2.aruco"]
+autodoc_mock_imports = ["cv2.aruco", "cv2"]
 
 # -- Options for HTML output -------------------------------------------------
 
