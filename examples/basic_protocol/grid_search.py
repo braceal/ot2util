@@ -12,9 +12,9 @@ from protocol import SimpleProtocolConfig
 
 from ot2util.agent import Agent
 from ot2util.camera import Camera
-from ot2util.config import WorkflowConfig, parse_args
+from ot2util.config import parse_args
 from ot2util.experiment import Experiment
-from ot2util.workflow import ColorMixingWorkflow
+from ot2util.workflow import ColorMixingWorkflow, ColorMixingWorkflowConfig
 
 import numpy as np
 import itertools
@@ -23,11 +23,13 @@ import cv2
 
 logger = logging.getLogger("ot2util")
 
-class GridSearchConfig(WorkflowConfig):
+class GridSearchConfig(ColorMixingWorkflowConfig):
     # Path to protocol script containing run function
     protocol: Path = ""
     # Base configuration options for the protocol
     base_config: Path = Path("config.yaml")
+    # whether to run simulation
+    run_simulation: bool = False
     # output_dir
     output_dir: Path = ""
     # Camera ID
@@ -50,7 +52,7 @@ class GridSearch(Agent):
         self.volumes = np.arange(self.config.volume_min, self.config.volume_max, self.config.volume_step)
         self.protocol_cfg = SimpleProtocolConfig.from_yaml(self.config.base_config)
         self.num_colors = len(self.protocol_cfg.source_volumes)
-        self.experiments = enumerate(itertools.permutations(self.volumes.tolist(), self.num_colors))
+        self.experiments = list(enumerate(itertools.permutations(self.volumes.tolist(), self.num_colors)))
         self.num_experiments = len(self.experiments)
         self.workflow = ColorMixingWorkflow(config)
 
@@ -65,7 +67,9 @@ class GridSearch(Agent):
             experiments = self.workflow.wait()
             for experiment in experiments:
                 print(f"RGB color for {experiment.result['target_well']}:{experiment.result['rgb']}")
-                cv2.imwrite(self.config.output_dir / name / "frame_with_marker2.png", experiment.result["frame_with_marker2"])
+                cv2.imwrite(str(self.config.output_dir / (name + "/frame_org.png")), experiment.result["org_frame"])
+                cv2.imwrite(str(self.config.output_dir / (name + "/frame_with_marker1.png")), experiment.result["frame_with_marker1"])
+                cv2.imwrite(str(self.config.output_dir / (name + "/frame_with_marker2.png")), experiment.result["frame_with_marker2"])
                 logger.info(experiment)
 
 

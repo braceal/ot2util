@@ -71,6 +71,7 @@ class ColorMixingRobot(OpenTronsRobot):
     ) -> Experiment:
 
         target_well = self.wellplate.get_open_well()
+        print("Target well:", target_well)
         tips = self.tiprack.get_tips(n=len(source_wells))
 
         # TODO: Perhaps allow user to interact at this point
@@ -101,9 +102,10 @@ class ColorMixingRobot(OpenTronsRobot):
         self, experiment: Experiment, source_wells: List[str], source_volumes: List[str]
     ) -> None:
         # TODO: Take picture with camera.
-        coordinate = self.camera._convert_coordinate(experiment.cfg.target_well)
-        rgb, hsv, frame, frame1, frame2 = self.camera.measure_well_color(coordinate)
-        print(f"RGB value for {experiment.cfg.target_well}={coordinate}:{rgb}")
+        print("target well in post experiment:", experiment.cfg.target_well)
+        # coordinate = self.camera._convert_coordinate(experiment.cfg.target_well)
+        rgb, hsv, frame, frame1, frame2 = self.camera.measure_well_color(experiment.cfg.target_well)
+        print(f"RGB value for {experiment.cfg.target_well}:{rgb}")
         experiment.result = {
             "rgb": rgb,
             "hsv": hsv,

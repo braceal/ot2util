@@ -1,10 +1,22 @@
 robots:
--
-  remote_dir: /root/test1
-  host: root@192.168.0.103 # root@192.168.0.102 # root@robotIP
-  port: 22
-  key_filename: ~/.ssh/id_rsa # Path to your ssh key
-  camera_id: 1
+- connection:
+    remote_dir: /root/test1
+    host: root@192.168.0.103
+    port: 22
+    key_filename: /Users/apple/.ssh/id_rsa
+  wellplate:
+    name: corning_96_wellplate_360ul_flat
+    location: '1'
+  tiprack:
+    name: opentrons_96_tiprack_20ul
+    location: '8'
+  pipette:
+    name: p20_single_gen2
+    mount: right
+  sourceplate:
+    name: corning_6_wellplate_16.8ml_flat
+    location: '3'
+  camera_id: 2
 
 output_dir: search_results
 protocol: protocol.py
