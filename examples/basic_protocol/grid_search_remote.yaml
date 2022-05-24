@@ -3,12 +3,13 @@ robots:
   remote_dir: /root/test1
   host: root@192.168.0.103 # root@192.168.0.102 # root@robotIP
   port: 22
-  key_filename: ~/.ssh/ot2_ssh_key # Path to your ssh key
+  key_filename: ~/.ssh/id_rsa # Path to your ssh key
+  camera_id: 1
 
 output_dir: search_results
 protocol: protocol.py
 base_config: config.yaml
 run_simulation: false
-volume_values:
-- 5
-- 10
+volume_min: 5
+volume_max: 15
+volume_step: 5

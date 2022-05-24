@@ -94,7 +94,7 @@ class Experiment:
 
         # Create new experiment directory
         self.output_dir.mkdir()
-
+        self.result = {}
         self.returncode: int = -1
 
     def __str__(self) -> str:
@@ -301,7 +301,7 @@ class RobotPool:
                 if not robot.running:
                     robot.running = True
                     return robot
-            if not robot.run_local:
+            if not robot.run_local: # is this correct? run_local is a function
                 time.sleep(10)  # Wait 10 seconds and try again
 
     def _run(self, name: str, *args: Any, **kwargs: Any) -> Experiment:

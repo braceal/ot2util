@@ -1,12 +1,12 @@
 source_wells:
 - A1
 - A2
-- A3
-destination_wells:
-- B1
-- B2
-- B3
-volume: 100
+
+source_volumes:
+- 5
+- 10
+
+
 wellplate:
     name: corning_96_wellplate_360ul_flat
     location: '1'
