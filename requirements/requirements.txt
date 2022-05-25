@@ -3,7 +3,8 @@ pydantic
 pyyaml
 Fabric
 paramiko==2.8
-opencv-python==4.5.5.64
+opencv-contrib-python
+numpy
 Jinja2
 black
 pebble
