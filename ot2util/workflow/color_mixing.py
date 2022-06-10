@@ -15,6 +15,7 @@ from ot2util.config import (
 from ot2util.experiment import Experiment, OpenTronsRobot, RobotPool
 from ot2util.labware import TipRack, WellPlate
 from ot2util.workflow.workflow import Workflow
+from ot2util.camera import Camera
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +47,7 @@ class ColorMixingRobotConfig(OpentronsRobotConfig):
         name="corning_6_wellplate_16.8ml_flat", location="3"
     )
     # TODO: Add camera config
+    camera_id: int = 2
 
 
 class ColorMixingWorkflowConfig(WorkflowConfig):
@@ -62,14 +64,15 @@ class ColorMixingRobot(OpenTronsRobot):
         self.wellplate = WellPlate()
         self.tiprack = TipRack()
         # TODO: Implement the camera
-        self.camera = None
+        self.camera = Camera(config.camera_id)
 
     def setup_experiment(
         self, name: str, source_wells: List[str], source_volumes: List[str]
     ) -> Experiment:
 
         target_well = self.wellplate.get_open_well()
-        tips = self.tiprack.get_tips(n=3)
+        print("Target well:", target_well)
+        tips = self.tiprack.get_tips(n=len(source_wells))
 
         # TODO: Perhaps allow user to interact at this point
         if target_well is None:
@@ -99,6 +102,18 @@ class ColorMixingRobot(OpenTronsRobot):
         self, experiment: Experiment, source_wells: List[str], source_volumes: List[str]
     ) -> None:
         # TODO: Take picture with camera.
+        print("target well in post experiment:", experiment.cfg.target_well)
+        # coordinate = self.camera._convert_coordinate(experiment.cfg.target_well)
+        rgb, hsv, frame, frame1, frame2 = self.camera.measure_well_color(experiment.cfg.target_well)
+        print(f"RGB value for {experiment.cfg.target_well}:{rgb}")
+        experiment.result = {
+            "rgb": rgb,
+            "hsv": hsv,
+            "target_well": experiment.cfg.target_well,
+            "org_frame": frame,
+            "frame_with_marker1": frame1,
+            "frame_with_marker2": frame2,
+        }
         return None
 
     def imports(self) -> None:

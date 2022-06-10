@@ -80,7 +80,7 @@ class Camera:
         # For details on what was happening. I have removed it for now
         # Can we get rid of the frame logic now? Is it good for logging?
 
-        return rgb, hsv
+        return rgb, hsv, frame, frame1, frame2
 
     def _get_color(
         self, img: cv2.Mat, center_br, center_origin, diameter_x, diameter_y, coordinate
@@ -153,10 +153,10 @@ class Camera:
         origin_br = (c_side[1][0], c1[1][1]) + np.array([4, -2])
         cv2.circle(img_markers, origin_br, 1, (0, 255, 0), 1)
 
-        center_origin = origin + (radius_x + radius_y) * 0.9
+        center_origin = origin + (radius_x * 1.2 + radius_y * 0.5)
         center_origin = center_origin.astype(int)
 
-        center_br = origin_br - (radius_x + radius_y) * 0.9
+        center_br = origin_br - (radius_x * 0.5 + radius_y * 1.2)
 
         for y in range(0, 12):
             for x in range(0, 8):
