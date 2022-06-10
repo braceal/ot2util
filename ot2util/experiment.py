@@ -267,7 +267,9 @@ class RobotPool:
     """Class to manage experiments to be run. Will handle distributing
     protocols and running them on any/all OT2's available."""
 
-    def __init__(self, robots: List[Robot], synchronized: bool = True) -> None:
+    def __init__(
+        self, robots: List[Robot], synchronized: bool = True, sleep_time: float = 10.0
+    ) -> None:
         """Initialize the experiment manager with required environmental information.
 
         Parameters
@@ -277,9 +279,12 @@ class RobotPool:
         synchronized: bool
             If True, will block the calling thread if submitted jobs
             exceed the number of available robots (defaults to True).
+        sleep_time : float, optional
+            Time to sleep while waiting for robot to finish executing a job.
         """
         self.robots = robots
         self.synchronized = synchronized
+        self._sleep_time = sleep_time
         self.futures: Set[Future[Experiment]] = set()
         self.pool = pebble.ThreadPool(max_workers=len(self.robots))
 
@@ -319,8 +324,7 @@ class RobotPool:
                 if not robot.running:
                     robot.running = True
                     return robot
-            if not robot.run_local:
-                time.sleep(10)  # Wait 10 seconds and try again
+            time.sleep(self._sleep_time)
 
     def _run(self, name: str, *args: Any, **kwargs: Any) -> Experiment:
         """Execute an experiment object.

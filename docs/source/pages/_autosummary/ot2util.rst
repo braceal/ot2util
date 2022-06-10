@@ -31,6 +31,7 @@
    ot2util.camera
    ot2util.config
    ot2util.experiment
+   ot2util.install
    ot2util.labware
    ot2util.utils
    ot2util.workflow

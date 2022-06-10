@@ -1,0 +1,18 @@
+connections:
+  - remote_dir: /root/test1
+    host: root@192.168.0.104
+    port: 22
+    key_filename: /Users/abrace/.ssh/ot2_ssh_key
+
+  - remote_dir: /root/test1
+    host: root@192.168.0.103
+    port: 22
+    key_filename: /Users/abrace/.ssh/ot2_ssh_key
+
+update_package: false
+update_calibration: false
+
+commands: 
+  - pwd
+
+log_dir: log_dir

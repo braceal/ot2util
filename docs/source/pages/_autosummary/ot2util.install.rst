@@ -1,7 +1,7 @@
-ot2util.utils
-=============
+ot2util.install
+===============
 
-.. automodule:: ot2util.utils
+.. automodule:: ot2util.install
 
    
    
@@ -13,7 +13,8 @@ ot2util.utils
 
    .. autosummary::
    
-      write_file
+      configure_ot2
+      configure_ot2s
    
    
 
