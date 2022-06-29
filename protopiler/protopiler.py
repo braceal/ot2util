@@ -358,7 +358,7 @@ class ProtoPiler:
                 yield vol, src, dst
 
     """
-    Everything under here is for getting a config from an existing protocol 
+    Everything under here is for getting a config from an existing protocol
     """
 
     def protocol_to_yaml(self, protocol_path: PathLike, yaml_path: PathLike) -> None:
