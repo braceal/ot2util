@@ -94,17 +94,28 @@ class ProtoPiler:
 
             # load the labware
             for data in self.config["equipment"]:
-                for _name, elem_data in data.items():
-                    if "location" in elem_data.keys():
-                        self.labware.append(Labware(**elem_data))
-                    elif "mount" in elem_data.keys():
-                        self.pipettes.append(Pipette(**elem_data))
+                if isinstance(data, dict) and len(data) == 1:  # it is in form {"name": {'info': info }}
+                    for _name, elem_data in data.items():
+                        if "location" in elem_data.keys():
+                            self.labware.append(Labware(**elem_data))
+                        elif "mount" in elem_data.keys():
+                            self.pipettes.append(Pipette(**elem_data))
+                else:  # in form {"info": info}
+                    if "location" in data.keys():
+                        self.labware.append(Labware(**data))
+                    elif "mount" in data.keys():
+                        self.pipettes.append(Pipette(**data))
 
             # load the commands
             self.commands = Commands(commands=[Command(**data) for data in self.config["commands"]])
 
         else:
             raise Exception("Unknown configuration file format")
+
+        if len(self.labware) == 0:
+            raise Exception("No labware present in config")
+        if len(self.pipettes) == 0:
+            raise Exception("No pippetes present")
 
         # generate name -> location and location -> name relationships for labware
         self.labware_to_location = {}
@@ -346,6 +357,10 @@ class ProtoPiler:
             for vol, src, dst in zip(volumes, sources, destinations):
                 yield vol, src, dst
 
+    """
+    Everything under here is for getting a config from an existing protocol 
+    """
+
     def protocol_to_yaml(self, protocol_path: PathLike, yaml_path: PathLike) -> None:
         # protocol_python = open(protocol_path).readlines()
 
@@ -429,7 +444,6 @@ def main(config_path):
     ppiler = ProtoPiler(config_path)
 
     ppiler.yaml_to_protocol(out_file="test_out.py")
-    ppiler.protocol_to_yaml(protocol_path="test_out.py", yaml_path="reconstructed.yaml")
 
 
 if __name__ == "__main__":
