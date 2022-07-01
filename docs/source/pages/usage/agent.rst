@@ -25,6 +25,6 @@ Steps:
 
     An example is shown below: 
 
-    .. literalinclude:: ../../../../examples/gym_test/agent.py
+    .. literalinclude:: ../../../../examples/showcase/agent.py
         :linenos:
         :language: python

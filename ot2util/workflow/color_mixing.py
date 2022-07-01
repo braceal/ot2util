@@ -90,9 +90,7 @@ class ColorMixingRobot(OpenTronsRobot):
 
         # Create new experiment
         experiment = Experiment(name, self.output_dir, config)
-
-        # TODO: Change function name to generate_protocol
-        self.generate_template(experiment.protocol)
+        self.write_protocol(experiment.protocol)
         return experiment
 
     def post_experiment(
@@ -151,14 +149,12 @@ class ColorMixingWorkflow(Workflow):
         #       Suppose for now they are location names e.g. "A1"
 
         logger.info(f"Launching experiment: {name}")
-        future = self.robot_pool.submit(
-            name=name, source_wells=colors, source_volumes=volumes
-        )
-        self.futures.add(future)
-        # TODO: Implement automatic batching
-
+        self.robot_pool.submit(name=name, source_wells=colors, source_volumes=volumes)
+        # The below code will be blocking on a single experiment
         # experiment = future.result()
-        # logger.info(f"Experiment {name} finished with returncode: {returncode}")
+        # logger.info(
+        #     f"Experiment {name} finished with returncode: {experiment.returncode}"
+        # )
 
     def state(self) -> None:  # noqa
         # TODO: Retrieve camera values

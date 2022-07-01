@@ -1,7 +1,9 @@
 robots:
-  - run_local: true
-    run_simulation: true
-    opentrons_path: /Users/abrace/src/ot2-examples/ot2/bin
+  - connection:
+      remote_dir: /root/test1
+      host: root@192.168.0.104
+      port: 22
+      key_filename: /Users/abrace/.ssh/ot2_ssh_key
     wellplate:
       name: corning_96_wellplate_360ul_flat
       location: '2'
@@ -14,13 +16,15 @@ robots:
     sourceplate:
       name: corning_6_wellplate_16.8ml_flat
       location: '3'
-      
-  - run_local: true
-    run_simulation: true
-    opentrons_path: /Users/abrace/src/ot2-examples/ot2/bin
+
+  - connection:
+      remote_dir: /root/test1
+      host: root@192.168.0.103
+      port: 22
+      key_filename: /Users/abrace/.ssh/ot2_ssh_key
     wellplate:
       name: corning_96_wellplate_360ul_flat
-      location: '3'
+      location: '6'
     tiprack:
       name: opentrons_96_tiprack_20ul
       location: '8'
@@ -29,9 +33,6 @@ robots:
       mount: right
     sourceplate:
       name: corning_6_wellplate_16.8ml_flat
-      location: '4'
+      location: '3'
 
 output_dir: search_results
-volume_values:
-- 5
-- 10

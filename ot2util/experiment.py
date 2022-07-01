@@ -7,7 +7,7 @@ import subprocess
 import time
 from concurrent.futures import Future, wait
 from pathlib import Path
-from typing import Any, Callable, List, Optional, Union
+from typing import Any, Callable, List, Optional, Set
 
 import black
 import pebble
@@ -22,6 +22,7 @@ from ot2util.config import (
     ProtocolConfig,
     RobotConnectionConfig,
 )
+from ot2util.utils import write_file
 
 logger = logging.getLogger(__name__)
 
@@ -70,12 +71,6 @@ def write_template(filename: Path, *args: Any, **kwargs: Any) -> None:
     source_code = black.format_str(source_code, mode=black.FileMode(line_length=100))
     with open(filename, "w") as f:
         f.write(source_code)
-
-
-def _write_log(contents: Union[str, bytes], path: Path) -> None:
-    mode = "wb" if isinstance(contents, bytes) else "w"
-    with open(path, mode) as f:
-        f.write(contents)
 
 
 class Experiment:
@@ -149,6 +144,9 @@ class RobotConnection:
         #       to the robot from a remote location not connected to the
         #       robots local WiFi environment.
         # https://docs.fabfile.org/en/2.6/concepts/networking.html#proxyjump
+
+    def __str__(self) -> str:
+        return self.host
 
     def __del__(self) -> None:
         # Close the remote connection
@@ -269,40 +267,64 @@ class RobotPool:
     """Class to manage experiments to be run. Will handle distributing
     protocols and running them on any/all OT2's available."""
 
-    def __init__(self, robots: List[Robot]) -> None:
+    def __init__(
+        self, robots: List[Robot], synchronized: bool = True, sleep_time: float = 10.0
+    ) -> None:
         """Initialize the experiment manager with required environmental information.
 
         Parameters
         ----------
         robots : List[Robots]
             List of robots available.
+        synchronized: bool
+            If True, will block the calling thread if submitted jobs
+            exceed the number of available robots (defaults to True).
+        sleep_time : float, optional
+            Time to sleep while waiting for robot to finish executing a job.
         """
         self.robots = robots
+        self.synchronized = synchronized
+        self._sleep_time = sleep_time
+        self.futures: Set[Future[Experiment]] = set()
         self.pool = pebble.ThreadPool(max_workers=len(self.robots))
 
     def __del__(self) -> None:
         self.pool.close()
         self.pool.join()
 
+    def _block_on_batch(self) -> None:
+        """Wait for running experiments to finish if there are
+        no more available robots."""
+        if len(self.futures) == len(self.robots):
+            for future in self.futures:
+                future.result()
+            self.futures = set()
+
     def submit(self, name: str, *args: Any, **kwargs: Any) -> Future[Experiment]:
-        fut = self.pool.schedule(self._run, args=(name, *args), kwargs=kwargs)
+        if self.synchronized:
+            self._block_on_batch()
+
+        future: Future[Experiment] = self.pool.schedule(
+            self._run, args=(name, *args), kwargs=kwargs
+        )
+        self.futures.add(future)
+
         if len(self.robots) == 1:
             # wait returns a named tuple of futures wait().done is
             # a set of completed futures and since we only have a single
             # thread in this case, it will have one element so we pop it
             # from the set and return the Future.
-            return wait([fut]).done.pop()
-        return fut
+            return wait([future]).done.pop()
+        return future
 
-    @pebble.synchronized
+    @pebble.synchronized  # type: ignore[misc]
     def _get_robot(self) -> Robot:
         while True:
             for robot in self.robots:
                 if not robot.running:
                     robot.running = True
                     return robot
-            if not robot.run_local:
-                time.sleep(10)  # Wait 10 seconds and try again
+            time.sleep(self._sleep_time)
 
     def _run(self, name: str, *args: Any, **kwargs: Any) -> Experiment:
         """Execute an experiment object.
@@ -324,7 +346,7 @@ class RobotPool:
         robot = self._get_robot()
 
         # Define the experiment to run
-        experiment = robot.setup_experiment(name, *args, **kwargs)
+        experiment: Experiment = robot.setup_experiment(name, *args, **kwargs)
 
         # Run any pre-execution steps
         robot.pre_experiment(experiment, *args, **kwargs)
@@ -363,7 +385,7 @@ class OpenTronsRobot(Robot):
         """Include imports here."""
         raise NotImplementedError
 
-    def generate_template(
+    def write_protocol(
         self,
         protocol_path: PathLike,
         funcs: List[Callable[..., Any]] = [],
@@ -388,8 +410,8 @@ class OpenTronsRobot(Robot):
         # which passes the config file to the protocol.bundled_data field
         command = f"opentrons_simulate {experiment.protocol} -d {experiment.yaml}"
         proc = subprocess.run(command, shell=True, capture_output=True)
-        _write_log(proc.stdout, experiment.output_dir / "stdout.log")
-        _write_log(proc.stderr, experiment.output_dir / "stderr.log")
+        write_file(proc.stdout, experiment.output_dir / "stdout.log")
+        write_file(proc.stderr, experiment.output_dir / "stderr.log")
         return proc.returncode
 
     def run_remote(self, experiment: Experiment) -> int:
@@ -415,8 +437,8 @@ class OpenTronsRobot(Robot):
 
         # Execute remote experiment
         result: Result = self.conn.run(f"{self.exe} {remote_protocol}")
-        _write_log(result.stdout, experiment.output_dir / "stdout.log")
-        _write_log(result.stderr, experiment.output_dir / "stderr.log")
+        write_file(result.stdout, experiment.output_dir / "stdout.log")
+        write_file(result.stderr, experiment.output_dir / "stderr.log")
         returncode: int = result.exited
         if returncode != 0:
             # Return early since something went wrong
